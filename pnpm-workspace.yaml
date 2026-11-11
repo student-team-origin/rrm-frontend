@@ -1,0 +1,4 @@
+# Setările pnpm pentru proiect.
+# Pachetele care au voie să ruleze scripturi la instalare (pnpm le blochează implicit).
+allowBuilds:
+  esbuild: true

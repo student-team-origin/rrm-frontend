@@ -34,9 +34,15 @@ Interfața web (SPA) pentru **Research Resource Manager**: platforma de rezervar
 | Teste        | Vitest + React Testing Library |
 | Calitate     | ESLint 9 + Prettier 3          |
 
+## Package manager: pnpm
+
+- Dependențele se gestionează **doar cu pnpm**. Versiunea e fixată în `package.json` → `packageManager`.
+- Comenzi: `pnpm install`, `pnpm add <pachet>`, `pnpm add -D <pachet>`, `pnpm <script>`. Nu folosi `npm install` și nu crea `package-lock.json`.
+- `pnpm-lock.yaml` se pune în git. Dacă un pachet nou cere scripturi la instalare, se adaugă explicit în `allowBuilds` din `pnpm-workspace.yaml`.
+
 ## Surse de adevăr
 
-- **Contractul API este `../rrm-backend/docs/openapi.yaml`.** Tipurile din `src/api/schema.d.ts` se generează din el cu `npm run gen:api`.
+- **Contractul API este `../rrm-backend/docs/openapi.yaml`.** Tipurile din `src/api/schema.d.ts` se generează din el cu `pnpm gen:api`.
   - Nu edita `schema.d.ts` manual.
   - Nu scrie de mână tipuri care există deja în schemă.
   - Dacă lipsește un endpoint, acesta se adaugă întâi în backend (alt tichet sau PR).
@@ -96,16 +102,16 @@ Tipuri: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `style`. Commit-uril
 - Descrierea conține: link-ul tichetului Jira, **ce** s-a schimbat, **cum** s-a testat și **capturi de ecran** pentru modificările vizuale.
 - Este nevoie de minim **1 aprobare**. Comentariile se rezolvă înainte de merge.
 - Merge: **Squash and merge**, apoi ramura se șterge.
-- După merge: `git switch main && git pull && npm install`, apoi verifici că aplicația pornește.
+- După merge: `git switch main && git pull && pnpm install`, apoi verifici că aplicația pornește.
 
 ### 5. Înainte de commit / PR
 
 ```bash
-npm run lint
-npm run format:check     # sau: npm run format
-npm run typecheck
-npm run test -- --run
-npm run build
+pnpm lint
+pnpm format:check     # sau: pnpm format
+pnpm typecheck
+pnpm test --run
+pnpm build
 ```
 
 Nu deschide PR dacă vreuna dintre ele eșuează.
@@ -224,12 +230,12 @@ O pagină nouă: componenta în `features/<x>/components/`, ruta în `routes/rou
 ## Comenzi utile
 
 ```bash
-npm install
-npm run dev              # http://localhost:5173 (proxy /api → http://localhost:8080)
-npm run gen:api          # regenerează src/api/schema.d.ts din ../rrm-backend/docs/openapi.yaml
-npm run lint
-npm run format
-npm run typecheck
-npm run test
-npm run build
+pnpm install
+pnpm dev              # http://localhost:5173 (proxy /api → http://localhost:8080)
+pnpm gen:api          # regenerează src/api/schema.d.ts din ../rrm-backend/docs/openapi.yaml
+pnpm lint
+pnpm format
+pnpm typecheck
+pnpm test
+pnpm build
 ```

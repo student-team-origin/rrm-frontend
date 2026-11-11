@@ -35,13 +35,14 @@ Ce oferă aplicația:
 ## Cerințe
 
 - Node.js 20 LTS sau mai nou
+- [pnpm](https://pnpm.io/) 10 sau mai nou: `npm install -g pnpm` (o singură dată). Proiectul **nu** folosește npm, deci nu rula `npm install` (ar crea un `package-lock.json`)
 - Backend-ul [rrm-backend](https://github.com/student-team-origin/rrm-backend) pornit local, pe portul `8080`
 
 ## Pornire locală
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Aplicația rulează la `http://localhost:5173`. Cererile către `/api` sunt redirecționate de Vite (proxy) spre `http://localhost:8080`.
@@ -54,16 +55,16 @@ VITE_API_BASE_URL=/api/v1
 
 ## Comenzi
 
-| Comandă             | Ce face                                                              |
-| ------------------- | -------------------------------------------------------------------- |
-| `npm run dev`       | Pornește serverul de dezvoltare                                      |
-| `npm run build`     | Build de producție în `dist/`                                        |
-| `npm run preview`   | Servește local build-ul de producție                                 |
-| `npm run gen:api`   | Generează tipurile TypeScript din `../rrm-backend/docs/openapi.yaml` |
-| `npm run lint`      | ESLint                                                               |
-| `npm run format`    | Formatează codul cu Prettier                                         |
-| `npm run typecheck` | Verificare de tipuri (`tsc --noEmit`)                                |
-| `npm run test`      | Teste cu Vitest                                                      |
+| Comandă          | Ce face                                                              |
+| ---------------- | -------------------------------------------------------------------- |
+| `pnpm dev`       | Pornește serverul de dezvoltare                                      |
+| `pnpm build`     | Build de producție în `dist/`                                        |
+| `pnpm preview`   | Servește local build-ul de producție                                 |
+| `pnpm gen:api`   | Generează tipurile TypeScript din `../rrm-backend/docs/openapi.yaml` |
+| `pnpm lint`      | ESLint                                                               |
+| `pnpm format`    | Formatează codul cu Prettier                                         |
+| `pnpm typecheck` | Verificare de tipuri (`tsc --noEmit`)                                |
+| `pnpm test`      | Teste cu Vitest                                                      |
 
 ## Structura proiectului
 

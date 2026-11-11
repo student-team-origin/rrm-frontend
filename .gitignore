@@ -19,3 +19,6 @@ npm-debug.log*
 !.vscode/extensions.json
 .idea
 .DS_Store
+
+# Proiectul folosește pnpm; un package-lock.json apare doar dacă cineva rulează npm din greșeală
+package-lock.json
