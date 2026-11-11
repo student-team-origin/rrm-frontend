@@ -1,0 +1,21 @@
+# Dependențe și build
+node_modules
+dist
+dist-ssr
+coverage
+*.tsbuildinfo
+
+# Variabile de mediu locale
+.env
+.env.local
+.env.*.local
+
+# Loguri
+*.log
+npm-debug.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
