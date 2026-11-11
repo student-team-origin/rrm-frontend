@@ -42,10 +42,18 @@ Interfața web (SPA) pentru **Research Resource Manager**: platforma de rezervar
 
 ## Surse de adevăr
 
-- **Contractul API este `../rrm-backend/docs/openapi.yaml`.** Tipurile din `src/api/schema.d.ts` se generează din el cu `pnpm gen:api`.
-  - Nu edita `schema.d.ts` manual.
+- **Contractul API este `api-contract/openapi.yaml`.** `api-contract/` este **submodulul git** [rrm-api-contract](https://github.com/student-team-origin/rrm-api-contract), comun cu backend-ul. Tipurile din `src/api/schema.d.ts` se generează din el cu `pnpm gen:api`.
+  - Nu edita `schema.d.ts` manual și nici `api-contract/openapi.yaml` din acest repository.
   - Nu scrie de mână tipuri care există deja în schemă.
-  - Dacă lipsește un endpoint, acesta se adaugă întâi în backend (alt tichet sau PR).
+  - Dacă lipsește un endpoint sau un câmp, acesta se adaugă întâi în `rrm-api-contract` (PR separat; reguli în `api-contract/CLAUDE.md`).
+  - După merge-ul acelui PR, pe ramura tichetului din frontend:
+    ```bash
+    git -C api-contract fetch && git -C api-contract switch --detach origin/main
+    pnpm gen:api
+    git add api-contract src/api/schema.d.ts
+    ```
+    Pointerul submodulului și `schema.d.ts` intră în același commit.
+  - Dacă `api-contract/` e gol după clonare: `git submodule update --init`.
 - Pentru ecrane și fluxuri urmează prototipul Figma și diagrama de activități din Confluence.
 
 ---
@@ -76,7 +84,7 @@ Tichete existente (din PRD):
 ### 2. Ramuri
 
 - `main` este protejată: **nu face niciodată commit sau push direct pe `main`**. Totul intră prin Pull Request.
-- Înainte de o ramură nouă, actualizează `main`: `git switch main && git pull`.
+- Înainte de o ramură nouă, actualizează `main`: `git switch main && git pull && git submodule update`.
 - Format: `<tip>/TO-<nr>-<descriere-scurta-kebab>`
   - `feature/TO-4-pagina-catalog`
   - `fix/TO-7-buton-check-in`
@@ -232,7 +240,7 @@ O pagină nouă: componenta în `features/<x>/components/`, ruta în `routes/rou
 ```bash
 pnpm install
 pnpm dev              # http://localhost:5173 (proxy /api → http://localhost:8080)
-pnpm gen:api          # regenerează src/api/schema.d.ts din ../rrm-backend/docs/openapi.yaml
+pnpm gen:api          # regenerează src/api/schema.d.ts din api-contract/openapi.yaml
 pnpm lint
 pnpm format
 pnpm typecheck

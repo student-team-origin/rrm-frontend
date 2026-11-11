@@ -18,7 +18,7 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest",
-    "gen:api": "openapi-typescript ../rrm-backend/docs/openapi.yaml -o src/api/schema.d.ts && prettier --write src/api/schema.d.ts"
+    "gen:api": "openapi-typescript api-contract/openapi.yaml -o src/api/schema.d.ts && prettier --write src/api/schema.d.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

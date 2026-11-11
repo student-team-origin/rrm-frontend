@@ -38,6 +38,22 @@ Ce oferă aplicația:
 - [pnpm](https://pnpm.io/) 10 sau mai nou: `npm install -g pnpm` (o singură dată). Proiectul **nu** folosește npm, deci nu rula `npm install` (ar crea un `package-lock.json`)
 - Backend-ul [rrm-backend](https://github.com/student-team-origin/rrm-backend) pornit local, pe portul `8080`
 
+## Clonare
+
+Contractul API este inclus ca submodul git (`api-contract/`, din [rrm-api-contract](https://github.com/student-team-origin/rrm-api-contract)), deci clonarea se face cu:
+
+```bash
+git clone --recurse-submodules https://github.com/student-team-origin/rrm-frontend.git
+```
+
+Dacă ai clonat deja fără submodule:
+
+```bash
+git submodule update --init
+```
+
+După fiecare `git pull`, rulează și `git submodule update`. Build-ul nu are nevoie de backend: tipurile generate (`src/api/schema.d.ts`) sunt în git, iar contractul vine din submodul.
+
 ## Pornire locală
 
 ```bash
@@ -55,16 +71,16 @@ VITE_API_BASE_URL=/api/v1
 
 ## Comenzi
 
-| Comandă          | Ce face                                                              |
-| ---------------- | -------------------------------------------------------------------- |
-| `pnpm dev`       | Pornește serverul de dezvoltare                                      |
-| `pnpm build`     | Build de producție în `dist/`                                        |
-| `pnpm preview`   | Servește local build-ul de producție                                 |
-| `pnpm gen:api`   | Generează tipurile TypeScript din `../rrm-backend/docs/openapi.yaml` |
-| `pnpm lint`      | ESLint                                                               |
-| `pnpm format`    | Formatează codul cu Prettier                                         |
-| `pnpm typecheck` | Verificare de tipuri (`tsc --noEmit`)                                |
-| `pnpm test`      | Teste cu Vitest                                                      |
+| Comandă          | Ce face                                                       |
+| ---------------- | ------------------------------------------------------------- |
+| `pnpm dev`       | Pornește serverul de dezvoltare                               |
+| `pnpm build`     | Build de producție în `dist/`                                 |
+| `pnpm preview`   | Servește local build-ul de producție                          |
+| `pnpm gen:api`   | Generează tipurile TypeScript din `api-contract/openapi.yaml` |
+| `pnpm lint`      | ESLint                                                        |
+| `pnpm format`    | Formatează codul cu Prettier                                  |
+| `pnpm typecheck` | Verificare de tipuri (`tsc --noEmit`)                         |
+| `pnpm test`      | Teste cu Vitest                                               |
 
 ## Structura proiectului
 
@@ -76,6 +92,7 @@ src/
 ├── routes/       rutare și protejarea paginilor pe roluri
 ├── theme.ts      tema MUI
 └── main.tsx
+api-contract/     submodul git → rrm-api-contract (openapi.yaml)
 ```
 
 ## Contribuție
