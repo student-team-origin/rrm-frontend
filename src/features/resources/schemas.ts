@@ -12,7 +12,7 @@ export const resourceFormSchema = z.object({
     .string()
     .trim()
     .min(1, 'Denumirea este obligatorie.')
-    .max(150, 'Denumirea poate avea cel mult 150 de caractere.'),
+    .max(120, 'Denumirea poate avea cel mult 120 de caractere.'),
   categorieId: z.string().min(1, 'Alege o categorie.'),
   laboratorId: z.string().min(1, 'Alege un laborator.'),
   specificatii: z.string().trim().max(2000, 'Specificațiile pot avea cel mult 2000 de caractere.'),
