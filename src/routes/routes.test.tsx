@@ -3,6 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { routes } from './routes';
 
+// Pagina de catalog cere date de la API; aici contează doar rutarea.
+vi.mock('../features/resources/api', () => ({
+  getResources: () => Promise.resolve({ page: 0, size: 20, total: 0, items: [] }),
+  getLabs: () => Promise.resolve([]),
+  getResourceCategories: () => Promise.resolve([]),
+}));
+
 describe('routes', () => {
   // Notă: redirecționarea „/” → „/resources” (<Navigate>) nu se testează în jsdom: React Router
   // creează un Request din Node care nu acceptă AbortSignal-ul din jsdom. În browser funcționează.
