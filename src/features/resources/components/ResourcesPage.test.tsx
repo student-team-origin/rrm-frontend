@@ -32,6 +32,7 @@ function page(items: Resource[], total = items.length): ResourcePage {
 
 describe('ResourcesPage', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(getResources).mockResolvedValue(page(RESOURCES));
     vi.mocked(getLabs).mockResolvedValue([
       { id: 2, denumire: 'Laborator Robotică' },

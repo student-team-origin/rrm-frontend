@@ -10,14 +10,15 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
 import type { Resource } from '../types';
 import { ResourceStatusChip } from './ResourceStatusChip';
 
 /** Variantele din „Rânduri pe pagină”. */
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
-const COLUMNS = ['Denumire', 'Categorie', 'Laborator', 'Stare', 'Timp pregătire (min)'];
+const COLUMNS = ['Denumire', 'Categorie', 'Laborator', 'Stare', 'Timp pregătire (min)', 'Acțiuni'];
+const RIGHT_ALIGNED = new Set(['Timp pregătire (min)', 'Acțiuni']);
 const SKELETON_ROWS = 5;
 
 function labName(labNames: ReadonlyMap<number, string>, labId: number | undefined): string {
@@ -34,6 +35,8 @@ export type ResourceTableProps = {
   size: number;
   onPageChange: (page: number) => void;
   onSizeChange: (size: number) => void;
+  /** Butoanele din coloana „Acțiuni” pentru o resursă. */
+  renderActions: (resource: Resource) => ReactNode;
 };
 
 /** Tabelul catalogului de resurse, cu paginare. Pe ecrane mici se derulează orizontal. */
@@ -46,6 +49,7 @@ export function ResourceTable({
   size,
   onPageChange,
   onSizeChange,
+  renderActions,
 }: ResourceTableProps) {
   const handleSizeChange = (event: ChangeEvent<HTMLInputElement>) => {
     onSizeChange(Number(event.target.value));
@@ -57,10 +61,10 @@ export function ResourceTable({
         <Table size="small" aria-label="Resurse">
           <TableHead>
             <TableRow>
-              {COLUMNS.map((column, index) => (
+              {COLUMNS.map((column) => (
                 <TableCell
                   key={column}
-                  align={index === COLUMNS.length - 1 ? 'right' : 'left'}
+                  align={RIGHT_ALIGNED.has(column) ? 'right' : 'left'}
                   sx={{ fontWeight: 'fontWeightBold', whiteSpace: 'nowrap' }}
                 >
                   {column}
@@ -106,6 +110,7 @@ export function ResourceTable({
                     {resource.stare ? <ResourceStatusChip status={resource.stare} /> : '—'}
                   </TableCell>
                   <TableCell align="right">{resource.timpPregatireMin ?? '—'}</TableCell>
+                  <TableCell align="right">{renderActions(resource)}</TableCell>
                 </TableRow>
               ))}
           </TableBody>

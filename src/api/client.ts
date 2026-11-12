@@ -61,3 +61,8 @@ function isApiError(value: unknown): value is ApiError {
     typeof (value as Record<string, unknown>).message === 'string'
   );
 }
+
+/** Codul HTTP al unei erori de la backend (ex. 404, 409) sau `undefined` dacă nu există răspuns. */
+export function getHttpStatus(error: unknown): number | undefined {
+  return error instanceof AxiosError ? error.response?.status : undefined;
+}

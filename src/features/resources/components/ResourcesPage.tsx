@@ -1,19 +1,29 @@
-import { Alert, Box, Button, LinearProgress, Typography } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import { Alert, Box, Button, LinearProgress, Snackbar, Stack, Typography } from '@mui/material';
 import { useMemo } from 'react';
 import { toApiError } from '../../../api/client';
 import { useLabs } from '../hooks/useLabs';
+import { useResourceActions } from '../hooks/useResourceActions';
 import { useResourceCategories } from '../hooks/useResourceCategories';
 import { useResourceFilters } from '../hooks/useResourceFilters';
 import { useResources } from '../hooks/useResources';
+import { DeleteResourceDialog } from './DeleteResourceDialog';
 import { ResourceFilterBar } from './ResourceFilterBar';
+import { ResourceFormDialog } from './ResourceFormDialog';
+import { ResourceRowActions } from './ResourceRowActions';
 import { ResourceTable } from './ResourceTable';
 
-/** Pagina Catalog resurse: lista resurselor, cu căutare, filtre și paginare. */
+/**
+ * Pagina Catalog resurse: lista resurselor, cu căutare, filtre și paginare, plus
+ * adăugarea, editarea, schimbarea stării și ștergerea unei resurse.
+ */
 export function ResourcesPage() {
   const filterState = useResourceFilters();
   const resourcesQuery = useResources(filterState.params);
   const labsQuery = useLabs();
   const categoriesQuery = useResourceCategories();
+  const actions = useResourceActions();
+  const { dialog, feedback } = actions;
 
   const labs = useMemo(() => labsQuery.data ?? [], [labsQuery.data]);
   const labNames = useMemo(
@@ -30,9 +40,18 @@ export function ResourcesPage() {
 
   return (
     <>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Catalog resurse
-      </Typography>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={2}
+        sx={{ mb: 2, justifyContent: 'space-between', alignItems: { sm: 'center' } }}
+      >
+        <Typography variant="h4" component="h1">
+          Catalog resurse
+        </Typography>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={actions.openCreate}>
+          Adaugă resursă
+        </Button>
+      </Stack>
 
       <ResourceFilterBar
         searchText={filterState.searchText}
@@ -75,9 +94,47 @@ export function ResourcesPage() {
             size={filterState.size}
             onPageChange={filterState.setPage}
             onSizeChange={filterState.setSize}
+            renderActions={(resource) => (
+              <ResourceRowActions
+                resource={resource}
+                onEdit={actions.openEdit}
+                onDelete={actions.openDelete}
+                onChangeStatus={actions.changeStatus}
+              />
+            )}
           />
         </Box>
       )}
+
+      {dialog?.type === 'form' && (
+        <ResourceFormDialog
+          resource={dialog.resource}
+          categories={categoriesQuery.data ?? []}
+          labs={labs}
+          onClose={actions.closeDialog}
+          onSaved={() => actions.notifySuccess('Resursa a fost salvată.')}
+        />
+      )}
+      {dialog?.type === 'delete' && (
+        <DeleteResourceDialog
+          resource={dialog.resource}
+          onClose={actions.closeDialog}
+          onDeleted={() => actions.notifySuccess('Resursa a fost ștearsă.')}
+        />
+      )}
+
+      <Snackbar
+        open={feedback !== null}
+        autoHideDuration={5000}
+        onClose={actions.clearFeedback}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        {feedback ? (
+          <Alert severity={feedback.severity} variant="filled" onClose={actions.clearFeedback}>
+            {feedback.message}
+          </Alert>
+        ) : undefined}
+      </Snackbar>
     </>
   );
 }
