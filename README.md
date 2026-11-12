@@ -54,20 +54,28 @@ git submodule update --init
 
 După fiecare `git pull`, rulează și `git submodule update`. Build-ul nu are nevoie de backend: tipurile generate (`src/api/schema.d.ts`) sunt în git, iar contractul vine din submodul.
 
-## Pornire locală
+## Pornire rapidă
+
+Aplicația completă se pornește în ordinea: **PostgreSQL → [backend](https://github.com/student-team-origin/rrm-backend#pornire-rapidă) → frontend**. Pornește întâi baza de date și backend-ul după README-ul din rrm-backend, apoi:
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Aplicația rulează la `http://localhost:5173`. Cererile către `/api` sunt redirecționate de Vite (proxy) spre `http://localhost:8080`.
+Deschide `http://localhost:5173`: pagina **Catalog resurse** afișează cele 6 resurse din datele de test.
 
-Variabile de mediu, în `.env.local` (nu se pune în git):
+Cererile către `/api` sunt redirecționate de Vite (proxy) spre `http://localhost:8080`, deci nu e nevoie de nicio configurare suplimentară. Opțional, adresa API-ului se poate schimba în `.env.local` (nu se pune în git):
 
 ```
 VITE_API_BASE_URL=/api/v1
 ```
+
+Probleme frecvente:
+
+- Pagina afișează „Resursele nu au putut fi încărcate”: backend-ul nu rulează pe portul `8080`.
+- Pagina rămâne albă după un `git pull` cu dependențe noi, iar în consola browserului apare `504 (Outdated Optimize Dep)`: oprește `pnpm dev`, pornește-l din nou și reîncarcă pagina.
+- `Port 5173 is in use`: un `pnpm dev` pornit anterior (eventual cu cod vechi) rulează încă, iar Vite pornește pe `5174`. Oprește procesul vechi, ca să nu deschizi din greșeală versiunea veche la `5173`.
 
 ## Comenzi
 
