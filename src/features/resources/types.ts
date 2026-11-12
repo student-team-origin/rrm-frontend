@@ -24,3 +24,14 @@ export type ResourceFilters = Pick<
   ResourceListParams,
   'q' | 'categorieId' | 'laboratorId' | 'stare'
 >;
+
+/** Corpul cererilor `POST /resources` și `PUT /resources/{id}` (schema `ResursaCreate`). */
+export type ResourceInput = components['schemas']['ResursaCreate'];
+
+/** Corpul cererii `PATCH /resources/{id}/status`. */
+export type ResourceStatusChange =
+  operations['patchResourcesByResourceIdStatus']['requestBody']['content']['application/json'];
+
+/** Răspunsul `PATCH /resources/{id}/status`: resursa și numărul de rezervări anulate. */
+export type ResourceStatusChangeResult =
+  operations['patchResourcesByResourceIdStatus']['responses'][200]['content']['application/json'];
