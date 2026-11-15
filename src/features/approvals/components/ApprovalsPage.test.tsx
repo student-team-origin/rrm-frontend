@@ -138,6 +138,22 @@ describe('ApprovalsPage', () => {
     await waitFor(() => expect(getApprovals).toHaveBeenCalledTimes(2));
   });
 
+  it('nu oferă Aprobă / Respinge pentru propria cerere a aprobatorului', async () => {
+    vi.mocked(getApprovals).mockResolvedValue([{ ...PENDING, solicitantId: COORDINATOR.id }]);
+    renderWithProviders(routes, '/approvals');
+    await screen.findByRole('article');
+
+    expect(
+      within(card()).getByText('Este cererea ta: o decide un alt aprobator.'),
+    ).toBeInTheDocument();
+    expect(
+      within(card()).queryByRole('button', { name: /^Aprobă cererea/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(card()).queryByRole('button', { name: /^Respinge cererea/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it('arată cererile respinse fără butoane de decizie', async () => {
     const rejected: ApprovalRequest = {
       ...PENDING,

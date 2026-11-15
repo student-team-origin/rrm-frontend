@@ -20,9 +20,9 @@ import {
 } from '@mui/material';
 import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { APPROVER_ROLES } from '../../features/approvals/utils/approvalRules';
 import { useCurrentUser } from '../../features/auth/hooks/useCurrentUser';
 import { useLogout } from '../../features/auth/hooks/useLogout';
+import { APPROVER_ROLES } from '../../features/auth/roles';
 import type { Role } from '../../features/auth/types';
 
 const DRAWER_WIDTH = 240;

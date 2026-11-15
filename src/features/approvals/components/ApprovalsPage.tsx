@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import { toApiError } from '../../../api/client';
+import { useCurrentUser } from '../../auth/hooks/useCurrentUser';
 import { useApprovals } from '../hooks/useApprovals';
 import { useApprovalsPageState } from '../hooks/useApprovalsPageState';
 import type { ApprovalTab } from '../types';
@@ -30,6 +31,7 @@ const TABS: { value: ApprovalTab; label: string; empty: string }[] = [
 export function ApprovalsPage() {
   const state = useApprovalsPageState();
   const query = useApprovals(state.tab);
+  const { data: currentUser } = useCurrentUser();
   const requests = query.data ?? [];
   const current = TABS.find((tab) => tab.value === state.tab) ?? TABS[0];
   const isPendingTab = state.tab === 'inAsteptare';
@@ -88,6 +90,7 @@ export function ApprovalsPage() {
                   key={request.id}
                   request={request}
                   onDecide={isPendingTab ? state.openDecision : undefined}
+                  currentUserId={currentUser?.id}
                 />
               ))}
             </Stack>

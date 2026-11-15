@@ -1,10 +1,6 @@
 import { getHttpStatus, toApiError } from '../../../api/client';
-import type { Role } from '../../auth/types';
 import type { ReservationStatus } from '../../reservations/types';
 import type { Decision } from '../types';
-
-/** Rolurile care aprobă cereri: pagina Aprobări și intrarea din meniu sunt doar pentru ele. */
-export const APPROVER_ROLES: Role[] = ['CoordonatorGrant', 'ResponsabilLaborator'];
 
 /** Nivelul la care așteaptă o cerere, după starea ei; `undefined` dacă nu mai așteaptă. */
 export function pendingLevelLabel(status: ReservationStatus | undefined): string | undefined {

@@ -18,18 +18,25 @@ export type ApprovalRequestCardProps = {
   request: ApprovalRequest;
   /** Lipsește în tab-urile Aprobate / Respinse: acolo cererile doar se consultă. */
   onDecide?: (request: ApprovalRequest, kind: DecisionKind) => void;
+  /** Utilizatorul curent: propria cerere nu o poate decide (backend: `AUTO_APROBARE_INTERZISA`). */
+  currentUserId?: number;
 };
 
 /**
  * O cerere de rezervare: resursa, solicitantul, intervalul, scopul și istoricul aprobărilor, plus
  * butoanele Aprobă / Respinge când cererea așteaptă decizia utilizatorului.
  */
-export function ApprovalRequestCard({ request, onDecide }: ApprovalRequestCardProps) {
+export function ApprovalRequestCard({
+  request,
+  onDecide,
+  currentUserId,
+}: ApprovalRequestCardProps) {
   const resourceName = request.resursa?.denumire ?? `Resursa #${request.resursaId}`;
   const interval =
     request.start && request.sfarsit ? formatDateTimeRange(request.start, request.sfarsit) : '—';
   const level = pendingLevelLabel(request.stare);
   const label = `${resourceName}, ${interval}`;
+  const isOwnRequest = currentUserId !== undefined && request.solicitantId === currentUserId;
 
   return (
     <Card variant="outlined" component="article" aria-label={`Cerere ${label}`}>
@@ -56,7 +63,14 @@ export function ApprovalRequestCard({ request, onDecide }: ApprovalRequestCardPr
         <Divider sx={{ my: 1.5 }} />
         <ApprovalHistory approvals={request.aprobari ?? []} status={request.stare} />
       </CardContent>
-      {onDecide && (
+      {onDecide && isOwnRequest && (
+        <CardActions sx={{ justifyContent: 'flex-end', px: 2, pb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Este cererea ta: o decide un alt aprobator.
+          </Typography>
+        </CardActions>
+      )}
+      {onDecide && !isOwnRequest && (
         <CardActions sx={{ justifyContent: 'flex-end', px: 2, pb: 2 }}>
           <Button
             color="error"

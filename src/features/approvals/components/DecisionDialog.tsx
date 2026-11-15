@@ -48,8 +48,11 @@ export function DecisionDialog({ request, kind, onClose, onDecided }: DecisionDi
   const fieldError = form.formState.errors.observatie?.message;
 
   const handleConfirm = form.handleSubmit((values) => {
+    if (request.id === undefined) {
+      return;
+    }
     decision.mutate(
-      { request, kind, input: toDecisionInput(values) },
+      { id: request.id, request, kind, input: toDecisionInput(values) },
       { onSuccess: (result) => onDecided(decisionSuccessMessage(result)) },
     );
   });

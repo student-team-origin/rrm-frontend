@@ -6,7 +6,12 @@ import type { ApprovalRequest, DecisionInput, DecisionKind } from '../types';
 import { isStaleListError } from '../utils/approvalRules';
 import { approvalKeys } from './approvalKeys';
 
-type DecisionVariables = { request: ApprovalRequest; kind: DecisionKind; input: DecisionInput };
+type DecisionVariables = {
+  id: number;
+  request: ApprovalRequest;
+  kind: DecisionKind;
+  input: DecisionInput;
+};
 
 /**
  * Aprobă sau respinge o cerere. După succes reîncarcă toate tab-urile de aprobări, rezervările și
@@ -29,10 +34,8 @@ export function useDecision() {
   };
 
   return useMutation({
-    mutationFn: ({ request, kind, input }: DecisionVariables) => {
-      const id = request.id as number;
-      return kind === 'approve' ? approveRequest(id, input) : rejectRequest(id, input);
-    },
+    mutationFn: ({ id, kind, input }: DecisionVariables) =>
+      kind === 'approve' ? approveRequest(id, input) : rejectRequest(id, input),
     onSuccess: (_decision, { request }) => refresh(request),
     onError: (error, { request }) => (isStaleListError(error) ? refresh(request) : undefined),
   });
