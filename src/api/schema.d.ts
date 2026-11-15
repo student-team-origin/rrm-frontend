@@ -133,7 +133,10 @@ export interface paths {
       };
       cookie?: never;
     };
-    /** Detaliile unui utilizator */
+    /**
+     * Detaliile unui utilizator
+     * @description Vizibile pentru utilizatorul însuși și pentru Administratorul de sistem. Altfel 403.
+     */
     get: operations['getUsersByUserId'];
     put?: never;
     post?: never;
@@ -170,7 +173,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Lista granturilor (utilizatorul vede granturile din care face parte) */
+    /**
+     * Lista granturilor (utilizatorul vede granturile din care face parte)
+     * @description Granturile pe care utilizatorul le coordonează (rolul CoordonatorGrant cu scopul grantului) sau din care face parte ca membru, ordonate după cod. Administratorul de sistem le vede pe toate.
+     */
     get: operations['getGrants'];
     put?: never;
     /** Crearea unui grant (Administrator Sistem) */
@@ -190,7 +196,10 @@ export interface paths {
       };
       cookie?: never;
     };
-    /** Detaliile unui grant, inclusiv soldul de ore */
+    /**
+     * Detaliile unui grant, inclusiv soldul de ore
+     * @description Vizibile pentru Coordonatorul grantului (rolul CoordonatorGrant cu scopul grantului), pentru membrii lui și pentru Administratorul de sistem. Altfel 403.
+     */
     get: operations['getGrantsByGrantId'];
     put?: never;
     post?: never;
@@ -509,7 +518,7 @@ export interface paths {
     };
     /**
      * Cererile care așteaptă decizia utilizatorului curent
-     * @description Coordonatorul vede cererile ÎnAșteptareCoordonator de pe granturile sale; Responsabilul de laborator vede cererile ÎnAșteptareLaborator din laboratoarele sale.
+     * @description Coordonatorul vede cererile ÎnAșteptareCoordonator de pe granturile sale; Responsabilul de laborator vede cererile ÎnAșteptareLaborator din laboratoarele sale (cele mai apropiate primele; cererile al căror start a trecut nu mai apar). Cu `aprobate` / `respinse` se întorc cererile asupra cărora utilizatorul a decis deja, cele mai recente decizii primele. Administratorul de sistem nu face parte din fluxul de aprobare.
      */
     get: operations['getApprovals'];
     put?: never;
@@ -553,7 +562,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Respingerea cererii (motivul este obligatoriu) */
+    /**
+     * Respingerea cererii (motivul este obligatoriu)
+     * @description Respinge cererea la nivelul ei curent (Coordonatorul la nivel 1, Responsabilul la nivel 2). Starea Respinsă eliberează intervalul, iar orele revin în soldul grantului.
+     */
     post: operations['postApprovalsByReservationIdReject'];
     delete?: never;
     options?: never;
@@ -1286,6 +1298,7 @@ export interface operations {
           'application/json': components['schemas']['Utilizator'];
         };
       };
+      403: components['responses']['Forbidden'];
       404: components['responses']['NotFound'];
     };
   };
@@ -1411,6 +1424,7 @@ export interface operations {
           'application/json': components['schemas']['Grant'];
         };
       };
+      403: components['responses']['Forbidden'];
       404: components['responses']['NotFound'];
     };
   };
@@ -2098,7 +2112,16 @@ export interface operations {
           'application/json': components['schemas']['RezervareDetaliu'][];
         };
       };
-      403: components['responses']['Forbidden'];
+      400: components['responses']['BadRequest'];
+      /** @description Utilizatorul nu este nici Coordonator de grant, nici Responsabil de laborator (`ACCES_INTERZIS`) */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
     };
   };
   postApprovalsByReservationIdApprove: {
@@ -2125,8 +2148,26 @@ export interface operations {
           'application/json': components['schemas']['Aprobare'];
         };
       };
-      403: components['responses']['Forbidden'];
-      409: components['responses']['Conflict'];
+      400: components['responses']['BadRequest'];
+      /** @description Utilizatorul nu este Coordonator de grant sau Responsabil de laborator (`ACCES_INTERZIS`), nu este aprobatorul nivelului curent al cererii (`FARA_DREPT_APROBARE`) sau cererea este chiar a lui (`AUTO_APROBARE_INTERZISA`) */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      404: components['responses']['NotFound'];
+      /** @description Cererea nu mai așteaptă o decizie (`CERERE_FARA_DECIZIE_IN_ASTEPTARE`) sau startul ei a trecut (`REZERVARE_INCEPUTA`) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
     };
   };
   postApprovalsByReservationIdReject: {
@@ -2154,7 +2195,25 @@ export interface operations {
         };
       };
       400: components['responses']['BadRequest'];
-      403: components['responses']['Forbidden'];
+      /** @description Utilizatorul nu este Coordonator de grant sau Responsabil de laborator (`ACCES_INTERZIS`), nu este aprobatorul nivelului curent al cererii (`FARA_DREPT_APROBARE`) sau cererea este chiar a lui (`AUTO_APROBARE_INTERZISA`) */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      404: components['responses']['NotFound'];
+      /** @description Cererea nu mai așteaptă o decizie (`CERERE_FARA_DECIZIE_IN_ASTEPTARE`) sau startul ei a trecut (`REZERVARE_INCEPUTA`) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
     };
   };
   getNotifications: {
