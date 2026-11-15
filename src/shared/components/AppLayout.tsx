@@ -1,3 +1,4 @@
+import EventNoteIcon from '@mui/icons-material/EventNote';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import MenuIcon from '@mui/icons-material/Menu';
 import {
@@ -24,6 +25,7 @@ type NavItem = { label: string; to: string; icon: ReactNode };
 /** Intrările din meniul lateral. Se adaugă aici pe măsură ce apar paginile noi. */
 const NAV_ITEMS: NavItem[] = [
   { label: 'Catalog resurse', to: '/resources', icon: <Inventory2Icon /> },
+  { label: 'Rezervările mele', to: '/reservations', icon: <EventNoteIcon /> },
 ];
 
 /** Structura comună a paginilor: bara de sus, meniul lateral și conținutul paginii curente. */

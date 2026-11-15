@@ -28,6 +28,17 @@ export const reservationStatusColors: Record<ReservationStatus, string> = {
   AnulataAutomat: '#9e9e9e',
 };
 
+export const reservationStatusLabels: Record<ReservationStatus, string> = {
+  InAsteptareCoordonator: 'Așteaptă coordonatorul',
+  InAsteptareLaborator: 'Așteaptă laboratorul',
+  Aprobata: 'Aprobată',
+  Activa: 'Activă',
+  Finalizata: 'Finalizată',
+  Respinsa: 'Respinsă',
+  Anulata: 'Anulată',
+  AnulataAutomat: 'Anulată automat',
+};
+
 export const theme = createTheme({
   palette: {
     primary: { main: '#0b5cad' },
