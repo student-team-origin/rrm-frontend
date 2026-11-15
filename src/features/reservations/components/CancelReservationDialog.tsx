@@ -92,6 +92,8 @@ export function CancelReservationDialog({
             {...form.register('motiv')}
             error={reasonError !== undefined}
             helperText={reasonError}
+            // Intenționat cu 1 peste limită: câmpul nu crește la nesfârșit, dar utilizatorul care
+            // depășește limita vede mesajul de validare, nu un câmp care pur și simplu nu mai scrie.
             slotProps={{ htmlInput: { maxLength: CANCEL_REASON_MAX_LENGTH + 1 } }}
           />
         </Stack>

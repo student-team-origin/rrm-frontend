@@ -1,8 +1,6 @@
 import {
-  Button,
   Paper,
   Skeleton,
-  Stack,
   Table,
   TableBody,
   TableCell,
@@ -13,13 +11,11 @@ import {
   Typography,
 } from '@mui/material';
 import type { ChangeEvent } from 'react';
-import { formatDateTimeRange } from '../../../shared/utils/formatDate';
 import type { Reservation } from '../types';
-import { canCancel } from '../utils/reservationRules';
-import { ReservationStatusChip } from './ReservationStatusChip';
+import { ReservationRow } from './ReservationRow';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
-const COLUMNS = ['Resursă', 'Interval', 'Ore', 'Stare', 'Acțiuni'];
+const COLUMNS = ['Resursă', 'Stare', 'Interval', 'Ore', 'Acțiuni'];
 const RIGHT_ALIGNED = new Set(['Ore', 'Acțiuni']);
 const SKELETON_ROWS = 5;
 
@@ -86,36 +82,13 @@ export function ReservationTable(props: ReservationTableProps) {
 
             {!isLoading &&
               reservations.map((reservation) => (
-                <TableRow key={reservation.id} hover>
-                  <TableCell sx={{ fontWeight: 'fontWeightMedium', whiteSpace: 'nowrap' }}>
-                    {resourceName(reservation)}
-                  </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                    {reservation.start && reservation.sfarsit
-                      ? formatDateTimeRange(reservation.start, reservation.sfarsit)
-                      : '—'}
-                  </TableCell>
-                  <TableCell align="right">{reservation.oreSolicitate ?? '—'}</TableCell>
-                  <TableCell>
-                    {reservation.stare ? <ReservationStatusChip status={reservation.stare} /> : '—'}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                      <Button size="small" onClick={() => props.onOpenDetail(reservation)}>
-                        Detalii
-                      </Button>
-                      {canCancel(reservation) && (
-                        <Button
-                          size="small"
-                          color="error"
-                          onClick={() => props.onCancel(reservation)}
-                        >
-                          Anulează
-                        </Button>
-                      )}
-                    </Stack>
-                  </TableCell>
-                </TableRow>
+                <ReservationRow
+                  key={reservation.id}
+                  reservation={reservation}
+                  resourceName={resourceName(reservation)}
+                  onOpenDetail={props.onOpenDetail}
+                  onCancel={props.onCancel}
+                />
               ))}
           </TableBody>
         </Table>

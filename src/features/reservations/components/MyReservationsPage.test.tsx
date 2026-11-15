@@ -70,12 +70,29 @@ describe('MyReservationsPage', () => {
     const pendingRow = within(rowOf('Imprimantă 3D Prusa MK4'));
     expect(pendingRow.getByText('Așteaptă laboratorul')).toBeInTheDocument();
     expect(pendingRow.getByText(/10:00–12:00/)).toBeInTheDocument();
-    expect(pendingRow.getByRole('button', { name: 'Anulează' })).toBeInTheDocument();
+    expect(pendingRow.getByRole('button', { name: /^Anulează rezervarea/ })).toBeInTheDocument();
 
     const completedRow = within(rowOf('Braț robotic UR5'));
     expect(completedRow.getByText('Finalizată')).toBeInTheDocument();
-    expect(completedRow.queryByRole('button', { name: 'Anulează' })).not.toBeInTheDocument();
+    expect(
+      completedRow.queryByRole('button', { name: /^Anulează rezervarea/ }),
+    ).not.toBeInTheDocument();
     expect(getMyReservations).toHaveBeenCalledWith({ page: 0, size: 20 });
+  });
+
+  it('dă butoanelor din rânduri nume accesibile diferite (resursa și intervalul)', async () => {
+    renderWithProviders(routes, '/reservations');
+    await screen.findByText('Imprimantă 3D Prusa MK4');
+
+    expect(
+      screen.getByRole('button', {
+        name: /^Anulează rezervarea Imprimantă 3D Prusa MK4, .*10:00–12:00$/,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /^Detalii rezervare Braț robotic UR5, / }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^Detalii rezervare/ })).toHaveLength(2);
   });
 
   it('filtrează după stare', async () => {
@@ -112,7 +129,7 @@ describe('MyReservationsPage', () => {
     await screen.findByText('Imprimantă 3D Prusa MK4');
 
     await user.click(
-      within(rowOf('Imprimantă 3D Prusa MK4')).getByRole('button', { name: 'Detalii' }),
+      within(rowOf('Imprimantă 3D Prusa MK4')).getByRole('button', { name: /^Detalii rezervare/ }),
     );
 
     const dialog = await screen.findByRole('dialog', { name: 'Detaliile rezervării' });
@@ -133,7 +150,9 @@ describe('MyReservationsPage', () => {
     await screen.findByText('Imprimantă 3D Prusa MK4');
 
     await user.click(
-      within(rowOf('Imprimantă 3D Prusa MK4')).getByRole('button', { name: 'Anulează' }),
+      within(rowOf('Imprimantă 3D Prusa MK4')).getByRole('button', {
+        name: /^Anulează rezervarea/,
+      }),
     );
     const dialog = await screen.findByRole('dialog', { name: 'Anulează rezervarea' });
     expect(within(dialog).getByText(/Imprimantă 3D Prusa MK4/)).toBeInTheDocument();
@@ -169,7 +188,9 @@ describe('MyReservationsPage', () => {
     await screen.findByText('Imprimantă 3D Prusa MK4');
 
     await user.click(
-      within(rowOf('Imprimantă 3D Prusa MK4')).getByRole('button', { name: 'Anulează' }),
+      within(rowOf('Imprimantă 3D Prusa MK4')).getByRole('button', {
+        name: /^Anulează rezervarea/,
+      }),
     );
     const dialog = await screen.findByRole('dialog', { name: 'Anulează rezervarea' });
     await user.click(within(dialog).getByRole('button', { name: 'Anulează rezervarea' }));
