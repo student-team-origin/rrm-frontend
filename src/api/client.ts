@@ -7,6 +7,34 @@ export type ApiError = components['schemas']['Error'];
 /** Cheia sub care se păstrează tokenul JWT (în sessionStorage, conform TO-1). */
 export const TOKEN_STORAGE_KEY = 'rrm.token';
 
+/** Tokenul sesiunii curente, dacă utilizatorul este autentificat. */
+export function getToken(): string | null {
+  return sessionStorage.getItem(TOKEN_STORAGE_KEY);
+}
+
+/** Păstrează tokenul primit la login (doar în sessionStorage: se pierde la închiderea tab-ului). */
+export function saveToken(token: string): void {
+  sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
+}
+
+/** Șterge tokenul (logout, sesiune expirată). */
+export function clearToken(): void {
+  sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
+/** Cererea de login: un 401 aici înseamnă credențiale greșite, nu sesiune expirată. */
+const LOGIN_URL = '/auth/login';
+
+let unauthorizedHandler: (() => void) | undefined;
+
+/**
+ * Ce se întâmplă când backend-ul răspunde 401 (sesiune expirată, token invalid): de regulă,
+ * redirecționarea la /login. Se setează o singură dată, în `App.tsx`, unde există router-ul.
+ */
+export function setUnauthorizedHandler(handler: (() => void) | undefined): void {
+  unauthorizedHandler = handler;
+}
+
 /** Instanța Axios folosită de toate apelurile către backend. */
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api/v1',
@@ -14,7 +42,7 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem(TOKEN_STORAGE_KEY);
+  const token = getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -24,9 +52,13 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
-    if (error instanceof AxiosError && error.response?.status === 401) {
-      // Sesiune expirată sau token invalid. Redirecționarea la /login se adaugă odată cu TO-1.
-      sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+    if (
+      error instanceof AxiosError &&
+      error.response?.status === 401 &&
+      error.config?.url !== LOGIN_URL
+    ) {
+      clearToken();
+      unauthorizedHandler?.();
     }
     return Promise.reject(error);
   },
