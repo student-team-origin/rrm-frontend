@@ -16,6 +16,12 @@ export async function getResources(params: ResourceListParams): Promise<Resource
   return data;
 }
 
+/** `GET /resources/{id}`: detaliile unei resurse. */
+export async function getResource(id: number): Promise<Resource> {
+  const { data } = await apiClient.get<Resource>(`/resources/${id}`);
+  return data;
+}
+
 /** `GET /labs`: toate laboratoarele. */
 export async function getLabs(): Promise<Laboratory[]> {
   const { data } = await apiClient.get<Laboratory[]>('/labs');

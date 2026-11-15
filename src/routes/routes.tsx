@@ -1,6 +1,7 @@
 import { Navigate, type RouteObject } from 'react-router-dom';
 import { LoginPage } from '../features/auth/components/LoginPage';
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute';
+import { MyReservationsPage } from '../features/reservations/components/MyReservationsPage';
 import { ResourcesPage } from '../features/resources/components/ResourcesPage';
 import { AppLayout } from '../shared/components/AppLayout';
 import { NotFoundPage } from '../shared/components/NotFoundPage';
@@ -21,6 +22,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <Navigate to="/resources" replace /> },
           { path: 'resources', element: <ResourcesPage /> },
+          { path: 'reservations', element: <MyReservationsPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },
