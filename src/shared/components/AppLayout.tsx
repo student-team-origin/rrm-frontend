@@ -1,4 +1,5 @@
 import EventNoteIcon from '@mui/icons-material/EventNote';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -19,17 +20,21 @@ import {
 } from '@mui/material';
 import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { APPROVER_ROLES } from '../../features/approvals/utils/approvalRules';
 import { useCurrentUser } from '../../features/auth/hooks/useCurrentUser';
 import { useLogout } from '../../features/auth/hooks/useLogout';
+import type { Role } from '../../features/auth/types';
 
 const DRAWER_WIDTH = 240;
 
-type NavItem = { label: string; to: string; icon: ReactNode };
+/** O intrare din meniu; cu `roles`, apare doar utilizatorilor cu cel puțin unul dintre ele. */
+type NavItem = { label: string; to: string; icon: ReactNode; roles?: Role[] };
 
 /** Intrările din meniul lateral. Se adaugă aici pe măsură ce apar paginile noi. */
 const NAV_ITEMS: NavItem[] = [
   { label: 'Catalog resurse', to: '/resources', icon: <Inventory2Icon /> },
   { label: 'Rezervările mele', to: '/reservations', icon: <EventNoteIcon /> },
+  { label: 'Aprobări', to: '/approvals', icon: <FactCheckIcon />, roles: APPROVER_ROLES },
 ];
 
 /**
@@ -42,12 +47,16 @@ export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: currentUser } = useCurrentUser();
   const logoutMutation = useLogout();
+  const userRoles = currentUser?.roluri?.map((role) => role.rol) ?? [];
+  const navItems = NAV_ITEMS.filter(
+    (item) => !item.roles || item.roles.some((role) => userRoles.includes(role)),
+  );
 
   const navigation = (
     <Box component="nav" aria-label="Meniu principal">
       <Toolbar />
       <List>
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <ListItemButton
             key={item.to}
             component={NavLink}

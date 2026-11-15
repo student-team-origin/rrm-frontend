@@ -1,4 +1,6 @@
 import { Navigate, type RouteObject } from 'react-router-dom';
+import { ApprovalsPage } from '../features/approvals/components/ApprovalsPage';
+import { APPROVER_ROLES } from '../features/approvals/utils/approvalRules';
 import { LoginPage } from '../features/auth/components/LoginPage';
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute';
 import { MyReservationsPage } from '../features/reservations/components/MyReservationsPage';
@@ -23,6 +25,10 @@ export const routes: RouteObject[] = [
           { index: true, element: <Navigate to="/resources" replace /> },
           { path: 'resources', element: <ResourcesPage /> },
           { path: 'reservations', element: <MyReservationsPage /> },
+          {
+            element: <ProtectedRoute roles={APPROVER_ROLES} />,
+            children: [{ path: 'approvals', element: <ApprovalsPage /> }],
+          },
           { path: '*', element: <NotFoundPage /> },
         ],
       },
