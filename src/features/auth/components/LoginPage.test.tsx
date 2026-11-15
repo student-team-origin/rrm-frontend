@@ -1,11 +1,15 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TOKEN_STORAGE_KEY } from '../../../api/client';
+import { TOKEN_STORAGE_KEY, apiClient, clearSessionExpired } from '../../../api/client';
 import { httpError } from '../../../api/testUtils';
 import { routes } from '../../../routes/routes';
 import { renderWithProviders } from '../../../test/renderWithProviders';
 import { getCurrentUser, login } from '../api';
-import { INVALID_CREDENTIALS_MESSAGE, TWO_FACTOR_PENDING_MESSAGE } from './LoginPage';
+import {
+  INVALID_CREDENTIALS_MESSAGE,
+  SESSION_EXPIRED_MESSAGE,
+  TWO_FACTOR_PENDING_MESSAGE,
+} from './LoginPage';
 
 // Catalogul (pagina de după login) cere date de la API; aici contează doar autentificarea.
 vi.mock('../../resources/api', () => ({
@@ -23,6 +27,7 @@ async function fillAndSubmit(email: string, parola: string) {
 describe('LoginPage', () => {
   beforeEach(() => {
     sessionStorage.clear();
+    clearSessionExpired();
   });
 
   it('nu trimite formularul fără e-mail și parolă', async () => {
@@ -89,5 +94,44 @@ describe('LoginPage', () => {
     expect(await screen.findByText(TWO_FACTOR_PENDING_MESSAGE)).toBeInTheDocument();
     expect(sessionStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
     expect(getCurrentUser).not.toHaveBeenCalled();
+  });
+  it('după o sesiune expirată (401 la o cerere) explică de ce a ajuns la login', async () => {
+    const expired = httpError(401, { code: 'SESIUNE_EXPIRATA', message: 'Sesiunea a expirat.' });
+    await expect(
+      apiClient.get('/resources', {
+        adapter: (config) => {
+          expired.config = config;
+          return Promise.reject(expired);
+        },
+      }),
+    ).rejects.toThrow();
+
+    renderWithProviders(routes, '/login');
+
+    expect(await screen.findByText(SESSION_EXPIRED_MESSAGE)).toBeInTheDocument();
+  });
+
+  it('fără mesaj de sesiune expirată la o vizită obișnuită a paginii', async () => {
+    renderWithProviders(routes, '/login');
+
+    expect(await screen.findByRole('heading', { name: 'Autentificare' })).toBeInTheDocument();
+    expect(screen.queryByText(SESSION_EXPIRED_MESSAGE)).not.toBeInTheDocument();
+  });
+
+  it('dacă /auth/me eșuează după login, rămâne pe login cu eroarea și fără token', async () => {
+    vi.mocked(login).mockResolvedValue({
+      twoFactorRequired: false,
+      tokens: { accessToken: 'jwt-nou', expiresIn: 28800 },
+    });
+    vi.mocked(getCurrentUser).mockRejectedValue(new Error('rețea'));
+    renderWithProviders(routes, '/login');
+
+    await fillAndSubmit('andrei.popescu@student.usv.ro', 'parola123');
+
+    expect(
+      await screen.findByText('Serverul nu răspunde. Verifică conexiunea și încearcă din nou.'),
+    ).toBeInTheDocument();
+    expect(sessionStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Autentificare' })).toBeInTheDocument();
   });
 });

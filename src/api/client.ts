@@ -22,10 +22,24 @@ export function clearToken(): void {
   sessionStorage.removeItem(TOKEN_STORAGE_KEY);
 }
 
-/** Cererea de login: un 401 aici înseamnă credențiale greșite, nu sesiune expirată. */
-const LOGIN_URL = '/auth/login';
+/**
+ * Cereri la care un 401 nu înseamnă „sesiune expirată”: la login sunt credențiale greșite, iar la
+ * logout utilizatorul pleacă oricum (useLogout curăță și navighează singur).
+ */
+const URLS_WITHOUT_SESSION_HANDLING = new Set(['/auth/login', '/auth/logout']);
 
 let unauthorizedHandler: (() => void) | undefined;
+let sessionExpired = false;
+
+/** `true` dacă utilizatorul a ajuns la login pentru că sesiunea i-a expirat (pentru un mesaj). */
+export function wasSessionExpired(): boolean {
+  return sessionExpired;
+}
+
+/** Șterge semnalul de sesiune expirată (după ce mesajul a fost afișat sau la un login nou). */
+export function clearSessionExpired(): void {
+  sessionExpired = false;
+}
 
 /**
  * Ce se întâmplă când backend-ul răspunde 401 (sesiune expirată, token invalid): de regulă,
@@ -55,9 +69,10 @@ apiClient.interceptors.response.use(
     if (
       error instanceof AxiosError &&
       error.response?.status === 401 &&
-      error.config?.url !== LOGIN_URL
+      !URLS_WITHOUT_SESSION_HANDLING.has(error.config?.url ?? '')
     ) {
       clearToken();
+      sessionExpired = true;
       unauthorizedHandler?.();
     }
     return Promise.reject(error);

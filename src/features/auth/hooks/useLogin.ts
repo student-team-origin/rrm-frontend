@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { saveToken } from '../../../api/client';
+import { clearToken, saveToken } from '../../../api/client';
 import { getCurrentUser, login } from '../api';
 import type { LoginRequest, LoginResponse } from '../types';
 import { authKeys } from './authKeys';
@@ -16,10 +16,17 @@ export function useLogin() {
       const token = response.tokens?.accessToken;
       if (!response.twoFactorRequired && token) {
         saveToken(token);
-        await queryClient.fetchQuery({
-          queryKey: authKeys.currentUser(),
-          queryFn: getCurrentUser,
-        });
+        try {
+          await queryClient.fetchQuery({
+            queryKey: authKeys.currentUser(),
+            queryFn: getCurrentUser,
+          });
+        } catch (error) {
+          // Fără utilizator nu se poate continua; fără token, pagina rămâne pe login cu eroarea
+          // afișată, în loc să redirecționeze (tokenul ar face-o să pară autentificată).
+          clearToken();
+          throw error;
+        }
       }
       return response;
     },

@@ -1,5 +1,11 @@
 import { AxiosHeaders, type InternalAxiosRequestConfig } from 'axios';
-import { TOKEN_STORAGE_KEY, apiClient, setUnauthorizedHandler } from './client';
+import {
+  TOKEN_STORAGE_KEY,
+  apiClient,
+  clearSessionExpired,
+  setUnauthorizedHandler,
+  wasSessionExpired,
+} from './client';
 import { httpError } from './testUtils';
 
 /** Un adaptor Axios care răspunde mereu cu 401, ca să ajungem în interceptor. */
@@ -14,6 +20,7 @@ describe('apiClient', () => {
 
   beforeEach(() => {
     onUnauthorized.mockClear();
+    clearSessionExpired();
     setUnauthorizedHandler(onUnauthorized);
   });
 
@@ -38,6 +45,7 @@ describe('apiClient', () => {
 
     expect(sessionStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    expect(wasSessionExpired()).toBe(true);
   });
 
   it('un 401 la login (credențiale greșite) nu este o sesiune expirată', async () => {
@@ -45,5 +53,13 @@ describe('apiClient', () => {
 
     expect(sessionStorage.getItem(TOKEN_STORAGE_KEY)).not.toBeNull();
     expect(onUnauthorized).not.toHaveBeenCalled();
+    expect(wasSessionExpired()).toBe(false);
+  });
+
+  it('un 401 la logout nu mai redirecționează a doua oară (useLogout o face deja)', async () => {
+    await expect(apiClient.post('/auth/logout', {}, { adapter: respondWith401 })).rejects.toThrow();
+
+    expect(onUnauthorized).not.toHaveBeenCalled();
+    expect(wasSessionExpired()).toBe(false);
   });
 });

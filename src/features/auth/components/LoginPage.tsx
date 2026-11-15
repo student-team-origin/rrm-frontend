@@ -11,10 +11,16 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Navigate, useLocation, useNavigate, type Location } from 'react-router-dom';
-import { getHttpStatus, getToken, toApiError } from '../../../api/client';
+import {
+  clearSessionExpired,
+  getHttpStatus,
+  getToken,
+  toApiError,
+  wasSessionExpired,
+} from '../../../api/client';
 import { useLogin } from '../hooks/useLogin';
 import { loginSchema, type LoginFormValues } from '../schemas';
 
@@ -23,6 +29,9 @@ export const DEFAULT_PAGE = '/resources';
 
 /** Mesajul pentru e-mail inexistent sau parolă greșită (backend: 401 `CREDENTIALE_INVALIDE`). */
 export const INVALID_CREDENTIALS_MESSAGE = 'E-mail sau parolă incorecte.';
+
+/** Mesajul afișat când utilizatorul a fost trimis la login pentru că sesiunea a expirat. */
+export const SESSION_EXPIRED_MESSAGE = 'Sesiunea a expirat. Autentifică-te din nou.';
 
 /** Mesajul afișat cât timp verificarea 2FA nu este implementată (TO-32). */
 export const TWO_FACTOR_PENDING_MESSAGE =
@@ -41,6 +50,10 @@ export function LoginPage() {
   const loginMutation = useLogin();
   const [submitError, setSubmitError] = useState<string>();
   const [twoFactorRequired, setTwoFactorRequired] = useState(false);
+  // Citit la prima randare și șters după afișare, ca mesajul să nu reapară la o vizită ulterioară.
+  const [sessionExpired, setSessionExpired] = useState(wasSessionExpired);
+
+  useEffect(() => clearSessionExpired(), []);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -54,6 +67,7 @@ export function LoginPage() {
   const handleLogin = form.handleSubmit(async (values) => {
     setSubmitError(undefined);
     setTwoFactorRequired(false);
+    setSessionExpired(false);
     try {
       const response = await loginMutation.mutateAsync(values);
       if (response.twoFactorRequired) {
@@ -93,6 +107,7 @@ export function LoginPage() {
           </Typography>
 
           <Stack component="form" noValidate onSubmit={handleLogin} spacing={2}>
+            {sessionExpired && <Alert severity="warning">{SESSION_EXPIRED_MESSAGE}</Alert>}
             {submitError && <Alert severity="error">{submitError}</Alert>}
             {twoFactorRequired && <Alert severity="info">{TWO_FACTOR_PENDING_MESSAGE}</Alert>}
             <TextField
