@@ -1,9 +1,11 @@
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
+import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import {
   AppBar,
   Box,
+  Button,
   Drawer,
   IconButton,
   List,
@@ -17,6 +19,8 @@ import {
 } from '@mui/material';
 import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { useCurrentUser } from '../../features/auth/hooks/useCurrentUser';
+import { useLogout } from '../../features/auth/hooks/useLogout';
 
 const DRAWER_WIDTH = 240;
 
@@ -28,11 +32,16 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Rezervările mele', to: '/reservations', icon: <EventNoteIcon /> },
 ];
 
-/** Structura comună a paginilor: bara de sus, meniul lateral și conținutul paginii curente. */
+/**
+ * Structura comună a paginilor: bara de sus (cu utilizatorul curent și deconectarea), meniul
+ * lateral și conținutul paginii curente.
+ */
 export function AppLayout() {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: currentUser } = useCurrentUser();
+  const logoutMutation = useLogout();
 
   const navigation = (
     <Box component="nav" aria-label="Meniu principal">
@@ -69,9 +78,27 @@ export function AppLayout() {
               <MenuIcon />
             </IconButton>
           )}
-          <Typography variant="h6" component="span" noWrap>
+          <Typography variant="h6" component="span" noWrap sx={{ flexGrow: 1 }}>
             Research Resource Manager
           </Typography>
+          {currentUser?.nume && (
+            <Typography
+              variant="body2"
+              component="span"
+              noWrap
+              sx={{ mr: 1, display: { xs: 'none', sm: 'block' } }}
+            >
+              {currentUser.nume}
+            </Typography>
+          )}
+          <Button
+            color="inherit"
+            startIcon={<LogoutIcon />}
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
+          >
+            Deconectare
+          </Button>
         </Toolbar>
       </AppBar>
 

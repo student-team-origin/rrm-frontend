@@ -106,8 +106,15 @@ Tipuri: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `style`. Commit-uril
 
 ### 4. Pull Request
 
-- Titlu: `TO-<nr> <Titlul tichetului>`.
-- Descrierea conține: link-ul tichetului Jira, **ce** s-a schimbat, **cum** s-a testat și **capturi de ecran** pentru modificările vizuale.
+- Titlul are aceeași formă ca un commit (devine mesajul commit-ului la squash merge): `feat(catalog): TO-65 pagina Catalog resurse cu filtre și paginare`.
+- Descrierea urmează **template-ul din `.github/pull_request_template.md`** (GitHub îl completează automat la deschiderea PR-ului). Secțiunile:
+  - **Context**: cheia și titlul tichetului Jira;
+  - **Ce s-a schimbat**: listă scurtă;
+  - **Verificare**: bifele completate (lint, typecheck, teste, build, testare manuală); ce nu s-a putut verifica se spune explicit;
+  - **Contract API**: submodul actualizat și `pnpm gen:api` rulat (cu link spre PR-ul din `rrm-api-contract`);
+  - **Capturi de ecran**: obligatorii pentru modificările vizuale;
+  - **Legat de**: PR-urile din alte repo-uri, dacă există.
+- Când scrii textul unui PR, completează toate secțiunile template-ului; nu adăuga secțiuni noi.
 - Este nevoie de minim **1 aprobare**. Comentariile se rezolvă înainte de merge.
 - Merge: **Squash and merge**, apoi ramura se șterge.
 - După merge: `git switch main && git pull && pnpm install`, apoi verifici că aplicația pornește.

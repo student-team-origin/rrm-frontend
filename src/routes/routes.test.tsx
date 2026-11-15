@@ -11,8 +11,6 @@ vi.mock('../features/resources/api', () => ({
 }));
 
 describe('routes', () => {
-  // Notă: redirecționarea „/” → „/resources” (<Navigate>) nu se testează în jsdom: React Router
-  // creează un Request din Node care nu acceptă AbortSignal-ul din jsdom. În browser funcționează.
   it('afișează Catalog resurse în layout-ul cu meniu', async () => {
     renderWithProviders(routes, '/resources');
 
@@ -23,6 +21,14 @@ describe('routes', () => {
     // În jsdom ecranul e considerat mic, deci meniul lateral se deschide din buton.
     await userEvent.click(screen.getByRole('button', { name: 'Deschide meniul' }));
     expect(await screen.findByRole('link', { name: 'Catalog resurse' })).toBeInTheDocument();
+  });
+
+  it('redirecționează „/” la Catalog resurse', async () => {
+    renderWithProviders(routes, '/');
+
+    expect(
+      await screen.findByRole('heading', { name: 'Catalog resurse', level: 1 }),
+    ).toBeInTheDocument();
   });
 
   it('afișează pagina de eroare pentru o adresă inexistentă', async () => {
