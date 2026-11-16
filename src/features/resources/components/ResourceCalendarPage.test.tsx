@@ -4,14 +4,25 @@ import dayjs from 'dayjs';
 import { httpError } from '../../../api/testUtils';
 import { routes } from '../../../routes/routes';
 import { renderWithProviders } from '../../../test/renderWithProviders';
-import { getResourceAvailability, getResources } from '../api';
+import { getLabs, getResourceAvailability, getResources } from '../api';
 import type { Resource } from '../types';
 
 vi.mock('../api');
 
 const RESOURCES: Resource[] = [
-  { id: 1, denumire: 'Braț robotic UR5', stare: 'Activa', timpPregatireMin: 15 },
-  { id: 6, denumire: 'Microscop Leica DM750', stare: 'Mentenanta', timpPregatireMin: 0 },
+  { id: 1, denumire: 'Braț robotic UR5', stare: 'Activa', timpPregatireMin: 15, laboratorId: 1 },
+  {
+    id: 6,
+    denumire: 'Microscop Leica DM750',
+    stare: 'Mentenanta',
+    timpPregatireMin: 0,
+    laboratorId: 2,
+  },
+];
+
+const LABS = [
+  { id: 1, denumire: 'Laborator Robotică' },
+  { id: 2, denumire: 'Laborator Biologie' },
 ];
 
 // În jsdom ecranul e considerat mic, deci calendarul pornește pe vizualizarea pe zi.
@@ -33,6 +44,7 @@ describe('ResourceCalendarPage', () => {
       total: RESOURCES.length,
       items: RESOURCES,
     });
+    vi.mocked(getLabs).mockResolvedValue(LABS);
     vi.mocked(getResourceAvailability).mockResolvedValue([
       {
         start: TODAY.hour(10).toISOString(),
@@ -46,27 +58,37 @@ describe('ResourceCalendarPage', () => {
     renderWithProviders(routes, '/calendar');
 
     expect(
-      await screen.findByRole('heading', { name: 'Calendar resurse', level: 1 }),
+      await screen.findByRole('heading', { name: 'Calendar disponibilitate', level: 1 }),
     ).toBeInTheDocument();
     expect(screen.getByText('Alege o resursă pentru a-i vedea calendarul.')).toBeInTheDocument();
     expect(getResourceAvailability).not.toHaveBeenCalled();
   });
 
-  it('afișează intervalele ocupate ale resursei din URL, pentru ziua afișată', async () => {
+  it('afișează intervalele ocupate ale resursei din URL, cu timpul de pregătire separat', async () => {
     renderWithProviders(routes, '/calendar?resursaId=1');
 
     await waitFor(() => expect(getResourceAvailability).toHaveBeenCalledWith(1, TODAY_RANGE));
     expect(await calendar().findByText('Aprobată')).toBeInTheDocument();
-    expect(calendar().getByText('10:00 - 12:15')).toBeInTheDocument();
+    expect(calendar().getByText('10:00 - 12:00')).toBeInTheDocument();
+    expect(calendar().getByText('Pregătire')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Resursă' })).toHaveTextContent('Braț robotic UR5');
   });
 
   it('afișează legenda cu stările care ocupă resursa', async () => {
     renderWithProviders(routes, '/calendar');
-    await screen.findByRole('heading', { name: 'Calendar resurse', level: 1 });
+    await screen.findByRole('heading', { name: 'Calendar disponibilitate', level: 1 });
 
-    for (const label of ['Așteaptă coordonatorul', 'Așteaptă laboratorul', 'Aprobată', 'Activă']) {
-      expect(screen.getByText(label)).toBeInTheDocument();
+    const legend = within(screen.getByRole('list', { name: 'Legenda calendarului' }));
+    for (const label of [
+      'Liber',
+      'Așteaptă coordonatorul',
+      'Așteaptă laboratorul',
+      'Aprobată',
+      'Activă',
+      'Pregătire',
+      'Resursă în mentenanță',
+    ]) {
+      expect(legend.getByText(label)).toBeInTheDocument();
     }
     expect(screen.queryByText('Respinsă')).not.toBeInTheDocument();
   });
@@ -81,6 +103,32 @@ describe('ResourceCalendarPage', () => {
     );
 
     await waitFor(() => expect(getResourceAvailability).toHaveBeenCalledWith(6, TODAY_RANGE));
+    expect(
+      screen.getByText(
+        'Resursa este în mentenanță și nu poate fi rezervată până nu redevine activă.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('filtrează resursele după laborator și renunță la resursa din alt laborator', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(routes, '/calendar?resursaId=1');
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: 'Resursă' })).toHaveTextContent(
+        'Braț robotic UR5',
+      ),
+    );
+
+    await user.click(screen.getByRole('combobox', { name: 'Laborator' }));
+    await user.click(await screen.findByRole('option', { name: 'Laborator Biologie' }));
+
+    expect(
+      await screen.findByText('Alege o resursă pentru a-i vedea calendarul.'),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: 'Resursă' }));
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Microscop Leica DM750 (Mentenanță)',
+    ]);
   });
 
   it('cere luna întreagă la vizualizarea pe lună', async () => {
