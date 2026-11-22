@@ -1,6 +1,7 @@
 import { Alert, Button, LinearProgress, Paper, Typography, useTheme } from '@mui/material';
 import { useMemo, useState } from 'react';
 import { toApiError } from '../../../api/client';
+import { useNow } from '../hooks/useNow';
 import { useResourceAvailability } from '../hooks/useResourceAvailability';
 import type { AvailabilityRange, Resource } from '../types';
 import {
@@ -34,14 +35,15 @@ export function ResourceAvailabilityPanel({
   const theme = useTheme();
   const [range, setRange] = useState<AvailabilityRange>();
   const availability = useResourceAvailability(resourceId, range);
+  const now = useNow();
 
   const intervals = availability.data;
   const events = useMemo(
     () => [
       ...toCalendarEvents(intervals ?? [], resource?.timpPregatireMin ?? 0, eventColors(theme)),
-      ...toUnavailableEvents(resource?.stare, range, new Date()),
+      ...toUnavailableEvents(resource?.stare, range, now),
     ],
-    [intervals, resource?.timpPregatireMin, resource?.stare, range, theme],
+    [intervals, resource?.timpPregatireMin, resource?.stare, range, theme, now],
   );
   const hours = useMemo(() => visibleHours(intervals ?? []), [intervals]);
   const hasNoReservations =

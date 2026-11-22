@@ -70,6 +70,22 @@ describe('ResourceDetailPage', () => {
     expect(screen.queryByText('Nicio rezervare în perioada afișată.')).not.toBeInTheDocument();
   });
 
+  it('afișează săptămâna începând de azi, nu de luni', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(routes, '/resources/15');
+    const region = within(await screen.findByRole('region', { name: 'Calendarul resursei' }));
+    await region.findByText('Așteaptă coordonatorul');
+
+    await user.click(region.getByRole('button', { name: 'Săptămână' }));
+
+    await waitFor(() =>
+      expect(getResourceAvailability).toHaveBeenLastCalledWith(15, {
+        from: TODAY.toISOString(),
+        to: TODAY.add(7, 'day').toISOString(),
+      }),
+    );
+  });
+
   it('anunță că nu există rezervări în perioada afișată', async () => {
     vi.mocked(getResourceAvailability).mockResolvedValue([]);
     renderWithProviders(routes, '/resources/15');
