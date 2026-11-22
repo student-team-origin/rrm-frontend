@@ -1,3 +1,4 @@
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
@@ -33,6 +34,7 @@ type NavItem = { label: string; to: string; icon: ReactNode; roles?: Role[] };
 /** Intrările din meniul lateral. Se adaugă aici pe măsură ce apar paginile noi. */
 const NAV_ITEMS: NavItem[] = [
   { label: 'Catalog resurse', to: '/resources', icon: <Inventory2Icon /> },
+  { label: 'Calendar', to: '/calendar', icon: <CalendarMonthIcon /> },
   { label: 'Rezervările mele', to: '/reservations', icon: <EventNoteIcon /> },
   { label: 'Aprobări', to: '/approvals', icon: <FactCheckIcon />, roles: APPROVER_ROLES },
 ];

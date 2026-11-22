@@ -1,4 +1,4 @@
-import type { ResourceListParams } from '../types';
+import type { AvailabilityRange, ResourceListParams } from '../types';
 
 /** Cheile TanStack Query pentru catalogul de resurse și nomenclatoarele lui. */
 export const resourceKeys = {
@@ -13,4 +13,7 @@ export const resourceKeys = {
    * rezervărilor resursei, ca intervalul eliberat sau ocupat să apară imediat.
    */
   availability: (id: number) => [...resourceKeys.all, 'availability', id] as const,
+  /** Disponibilitatea resursei în intervalul afișat; se invalidează odată cu `availability(id)`. */
+  availabilityRange: (id: number, range: AvailabilityRange) =>
+    [...resourceKeys.availability(id), range] as const,
 };

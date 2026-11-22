@@ -1,6 +1,8 @@
 import { apiClient } from '../../api/client';
 import type {
+  AvailabilityRange,
   Laboratory,
+  OccupiedInterval,
   Resource,
   ResourceCategory,
   ResourceInput,
@@ -19,6 +21,20 @@ export async function getResources(params: ResourceListParams): Promise<Resource
 /** `GET /resources/{id}`: detaliile unei resurse. */
 export async function getResource(id: number): Promise<Resource> {
   const { data } = await apiClient.get<Resource>(`/resources/${id}`);
+  return data;
+}
+
+/**
+ * `GET /resources/{id}/availability`: intervalele în care resursa este ocupată între `from` și
+ * `to` (rezervările în așteptare, aprobate sau active, cu timpul de pregătire inclus).
+ */
+export async function getResourceAvailability(
+  id: number,
+  range: AvailabilityRange,
+): Promise<OccupiedInterval[]> {
+  const { data } = await apiClient.get<OccupiedInterval[]>(`/resources/${id}/availability`, {
+    params: range,
+  });
   return data;
 }
 

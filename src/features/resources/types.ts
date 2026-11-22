@@ -32,6 +32,16 @@ export type ResourceInput = components['schemas']['ResursaCreate'];
 export type ResourceStatusChange =
   operations['patchResourcesByResourceIdStatus']['requestBody']['content']['application/json'];
 
+/**
+ * Un interval în care resursa este ocupată (schema `IntervalOcupat`). `sfarsit` include timpul de
+ * pregătire al resursei.
+ */
+export type OccupiedInterval = components['schemas']['IntervalOcupat'];
+
+/** Parametrii `GET /resources/{id}/availability`: intervalul afișat în calendar (ISO 8601). */
+export type AvailabilityRange =
+  operations['getResourcesByResourceIdAvailability']['parameters']['query'];
+
 /** Răspunsul `PATCH /resources/{id}/status`: resursa și numărul de rezervări anulate. */
 export type ResourceStatusChangeResult =
   operations['patchResourcesByResourceIdStatus']['responses'][200]['content']['application/json'];
