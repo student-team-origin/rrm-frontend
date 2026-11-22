@@ -2,7 +2,13 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { routes } from '../../../routes/routes';
 import { renderWithProviders } from '../../../test/renderWithProviders';
-import { getLabs, getResourceCategories, getResources } from '../api';
+import {
+  getLabs,
+  getResource,
+  getResourceAvailability,
+  getResourceCategories,
+  getResources,
+} from '../api';
 import type { Resource, ResourcePage } from '../types';
 
 vi.mock('../api');
@@ -100,6 +106,44 @@ describe('ResourcesPage', () => {
     await user.click(screen.getByRole('button', { name: 'Resetează' }));
     expect(screen.getByRole('textbox', { name: 'Caută' })).toHaveValue('');
     await waitFor(() => expect(getResources).toHaveBeenLastCalledWith({ page: 0, size: 20 }));
+  });
+
+  it('deschide pagina de detaliu la click pe rândul resursei', async () => {
+    vi.mocked(getResource).mockResolvedValue(RESOURCES[0]);
+    vi.mocked(getResourceAvailability).mockResolvedValue([]);
+    const user = userEvent.setup();
+    renderWithProviders(routes, '/resources');
+
+    await user.click(await screen.findByText('Robot educațional'));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Braț robotic UR5', level: 1 }),
+    ).toBeInTheDocument();
+    expect(getResource).toHaveBeenCalledWith(15);
+  });
+
+  it('are pe denumire un link spre pagina de detaliu', async () => {
+    renderWithProviders(routes, '/resources');
+
+    expect(await screen.findByRole('link', { name: 'Braț robotic UR5' })).toHaveAttribute(
+      'href',
+      '/resources/15',
+    );
+  });
+
+  it('nu deschide pagina de detaliu din butoanele de acțiuni', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(routes, '/resources');
+
+    await screen.findByText('Robot educațional');
+    await user.click(screen.getByRole('button', { name: 'Editează Braț robotic UR5' }));
+
+    // Se deschide dialogul de editare, iar pagina rămâne Catalogul (ascuns de dialogul modal).
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Catalog resurse', level: 1, hidden: true }),
+    ).toBeInTheDocument();
+    expect(getResource).not.toHaveBeenCalled();
   });
 
   it('cere pagina următoare din TablePagination', async () => {
