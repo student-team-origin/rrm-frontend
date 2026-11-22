@@ -25,3 +25,15 @@ export type ReservationPage =
 export type CancelReservationInput = NonNullable<
   operations['postReservationsByReservationIdCancel']['requestBody']
 >['content']['application/json'];
+
+/** Un grant de cercetare, cu soldul de ore (schema `Grant`). */
+export type Grant = components['schemas']['Grant'];
+
+/** Corpul cererii `POST /reservations` (schema `RezervareCreate`). */
+export type ReservationInput = components['schemas']['RezervareCreate'];
+
+/** Răspunsul 409 al `POST /reservations`: intervalul e ocupat, cu intervalele libere din zi. */
+export type ReservationConflict = components['schemas']['ConflictInterval'];
+
+/** Un interval liber propus la 409. */
+export type FreeInterval = NonNullable<ReservationConflict['intervaleLibere']>[number];
