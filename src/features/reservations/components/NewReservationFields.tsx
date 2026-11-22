@@ -3,6 +3,7 @@ import { Controller, useWatch, type UseFormReturn } from 'react-hook-form';
 import { PURPOSE_MAX_LENGTH, type NewReservationValues } from '../schemas';
 import type { Grant } from '../types';
 import { durationHours, formatHours } from '../utils/formatHours';
+import { grantUnavailableReason } from '../utils/grantRules';
 
 export type NewReservationFieldsProps = {
   form: UseFormReturn<NewReservationValues>;
@@ -65,11 +66,15 @@ export function NewReservationFields({ form, grants }: NewReservationFieldsProps
                 : undefined)
             }
           >
-            {grants.map((g) => (
-              <MenuItem key={g.id} value={String(g.id)}>
-                {g.cod} · {formatHours(g.oreRamase ?? 0)} rămase
-              </MenuItem>
-            ))}
+            {grants.map((g) => {
+              const reason = grantUnavailableReason(g);
+              return (
+                // Granturile expirate sau fără ore rămân vizibile, dar nu se pot alege (ar da 422).
+                <MenuItem key={g.id} value={String(g.id)} disabled={reason !== undefined}>
+                  {g.cod} · {reason ?? `${formatHours(g.oreRamase ?? 0)} rămase`}
+                </MenuItem>
+              );
+            })}
           </TextField>
         )}
       />

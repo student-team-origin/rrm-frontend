@@ -1,5 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, CircularProgress, DialogActions, DialogContent, Stack } from '@mui/material';
+import {
+  Alert,
+  Button,
+  CircularProgress,
+  DialogActions,
+  DialogContent,
+  Stack,
+} from '@mui/material';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { getHttpStatus, toApiError } from '../../../api/client';
@@ -18,6 +25,8 @@ import {
   type CreateReservationError,
   type FreeSlot,
 } from '../utils/reservationErrors';
+import { durationHours, formatHours } from '../utils/formatHours';
+import { isGrantUsable } from '../utils/grantRules';
 import { CreateReservationErrorAlert } from './CreateReservationErrorAlert';
 import { NewReservationFields } from './NewReservationFields';
 
@@ -34,6 +43,9 @@ export type NewReservationFormProps = {
 
 const schema = newReservationSchema();
 
+/** Mesajul când intervalul liber ales s-a terminat între timp. */
+const FREE_INTERVAL_GONE_TEXT = 'Intervalul liber ales s-a terminat între timp. Alege altul.';
+
 /** Conținutul și butoanele dialogului „Rezervare nouă”, cu validare și erorile 400 / 409 / 422. */
 export function NewReservationForm({
   resourceId,
@@ -44,13 +56,15 @@ export function NewReservationForm({
 }: NewReservationFormProps) {
   const createReservation = useCreateReservation();
   const [submitError, setSubmitError] = useState<CreateReservationError>();
+  const [notice, setNotice] = useState<string>();
+  const usableGrants = grants.filter((grant) => isGrantUsable(grant));
   const form = useForm<NewReservationValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       start: toDateTimeInput(draft.start),
       sfarsit: toDateTimeInput(draft.end),
-      // Cu un singur grant, nu are rost să-l mai aleagă utilizatorul.
-      grantId: grants.length === 1 ? String(grants[0]?.id) : '',
+      // Cu un singur grant utilizabil, nu are rost să-l mai aleagă utilizatorul.
+      grantId: usableGrants.length === 1 ? String(usableGrants[0]?.id) : '',
       scop: '',
     },
   });
@@ -58,6 +72,7 @@ export function NewReservationForm({
 
   const handleSubmit = form.handleSubmit(async (values) => {
     setSubmitError(undefined);
+    setNotice(undefined);
     try {
       onCreated(await createReservation.mutateAsync(toReservationInput(resourceId, values)));
     } catch (error) {
@@ -84,9 +99,19 @@ export function NewReservationForm({
     const { start, sfarsit } = form.getValues();
     const durationMs = new Date(sfarsit).getTime() - new Date(start).getTime();
     const interval = fitToFreeInterval(free, Number.isNaN(durationMs) ? 0 : durationMs);
+    if (!interval) {
+      setSubmitError({ kind: 'other', message: FREE_INTERVAL_GONE_TEXT });
+      return;
+    }
     form.setValue('start', toDateTimeInput(interval.start), { shouldValidate: true });
     form.setValue('sfarsit', toDateTimeInput(interval.end), { shouldValidate: true });
     setSubmitError(undefined);
+    const hours = durationHours(toDateTimeInput(interval.start), toDateTimeInput(interval.end));
+    setNotice(
+      interval.shortened && hours !== undefined
+        ? `Intervalul a fost scurtat la ${formatHours(hours)}, cât mai era liber.`
+        : undefined,
+    );
   };
 
   return (
@@ -106,6 +131,7 @@ export function NewReservationForm({
               onPickFreeInterval={handlePickFreeInterval}
             />
           )}
+          {notice && <Alert severity="info">{notice}</Alert>}
           <NewReservationFields form={form} grants={grants} />
         </Stack>
       </DialogContent>

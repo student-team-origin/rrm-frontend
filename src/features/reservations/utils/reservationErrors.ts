@@ -45,14 +45,45 @@ function isFreeInterval(value: unknown): value is FreeSlot {
   return typeof start === 'string' && typeof sfarsit === 'string';
 }
 
+/** Pasul la care se rotunjește în sus startul, când intervalul liber începe chiar acum. */
+export const START_ROUNDING_MINUTES = 5;
+
+/** Intervalul propus din unul liber; `shortened` arată că durata cerută nu a încăput. */
+export type FittedInterval = { start: Date; end: Date; shortened: boolean };
+
 /**
  * Intervalul propus când utilizatorul alege un interval liber: aceeași durată ca cererea inițială,
  * începând cu intervalul liber, dar fără să-l depășească.
+ *
+ * Câmpurile de dată au precizie de un minut, deci startul se rotunjește în sus la minut. Pentru
+ * ziua de azi, backend-ul începe primul interval liber chiar de la ora curentă (cu secunde); dacă
+ * acesta nu mai e în viitor, startul devine ora curentă rotunjită în sus la
+ * {@link START_ROUNDING_MINUTES} minute, ca să mai fie valid și când se trimite cererea. Întoarce `undefined` dacă din intervalul liber nu mai rămâne nimic.
  */
-export function fitToFreeInterval(free: FreeSlot, durationMs: number): { start: Date; end: Date } {
-  const start = dayjs(free.start);
+export function fitToFreeInterval(
+  free: FreeSlot,
+  durationMs: number,
+  now: Date = new Date(),
+): FittedInterval | undefined {
+  const freeStart = dayjs(free.start);
+  const start = freeStart.isAfter(now)
+    ? ceilTo(freeStart, 1)
+    : ceilTo(dayjs(now).add(1, 'millisecond'), START_ROUNDING_MINUTES);
   const freeEnd = dayjs(free.sfarsit);
-  const wanted = start.add(Math.max(durationMs, 0), 'millisecond');
-  const end = durationMs > 0 && wanted.isBefore(freeEnd) ? wanted : freeEnd;
-  return { start: start.toDate(), end: end.toDate() };
+  if (!freeEnd.isAfter(start)) {
+    return undefined;
+  }
+  const wanted = start.add(durationMs, 'millisecond');
+  const fits = durationMs > 0 && !wanted.isAfter(freeEnd);
+  return {
+    start: start.toDate(),
+    end: (fits ? wanted : freeEnd).toDate(),
+    shortened: durationMs > 0 && !fits,
+  };
+}
+
+/** Rotunjește în sus la un multiplu de `minutes` minute (o oră exactă rămâne neschimbată). */
+function ceilTo(value: dayjs.Dayjs, minutes: number): dayjs.Dayjs {
+  const step = minutes * 60_000;
+  return dayjs(Math.ceil(value.valueOf() / step) * step);
 }

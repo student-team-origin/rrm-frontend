@@ -14,6 +14,7 @@ vi.mock('../api');
 const GRANTS: Grant[] = [
   { id: 3, cod: 'PN-III-P4-2026', oreAlocate: 120, oreConsumate: 78, oreRamase: 42 },
   { id: 4, cod: 'PED-2026-11', oreAlocate: 20, oreConsumate: 19, oreRamase: 1 },
+  { id: 5, cod: 'TE-2024-01', oreAlocate: 50, oreRamase: 10, dataSfarsit: '2025-06-30' },
 ];
 
 const TOMORROW = dayjs().add(1, 'day').startOf('day');

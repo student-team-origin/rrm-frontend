@@ -147,7 +147,6 @@ export function ResourceDetailPage() {
         <Alert
           severity="success"
           variant="filled"
-          onClose={() => setCreatedOpen(false)}
           action={
             <Button color="inherit" size="small" component={RouterLink} to="/reservations">
               Rezervările mele
