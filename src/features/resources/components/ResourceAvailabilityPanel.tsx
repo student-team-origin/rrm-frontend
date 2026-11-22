@@ -21,6 +21,8 @@ export type ResourceAvailabilityPanelProps = {
   resourceId: number;
   /** Resursa afișată, dacă e deja încărcată (pentru timpul de pregătire și stare). */
   resource: Resource | undefined;
+  /** Dacă e dat, un interval liber selectat în calendar deschide formularul de rezervare. */
+  onSelectInterval?: (interval: { start: Date; end: Date }) => void;
 };
 
 /**
@@ -31,6 +33,7 @@ export type ResourceAvailabilityPanelProps = {
 export function ResourceAvailabilityPanel({
   resourceId,
   resource,
+  onSelectInterval,
 }: ResourceAvailabilityPanelProps) {
   const theme = useTheme();
   const [range, setRange] = useState<AvailabilityRange>();
@@ -81,7 +84,12 @@ export function ResourceAvailabilityPanel({
             sx={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1 }}
           />
         )}
-        <AvailabilityCalendar events={events} hours={hours} onRangeChange={setRange} />
+        <AvailabilityCalendar
+          events={events}
+          hours={hours}
+          onRangeChange={setRange}
+          onSelect={onSelectInterval}
+        />
         {hasNoReservations && (
           <Typography role="status" variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Nicio rezervare în perioada afișată.
