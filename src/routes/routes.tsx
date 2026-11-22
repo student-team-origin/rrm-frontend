@@ -5,6 +5,7 @@ import { ProtectedRoute } from '../features/auth/components/ProtectedRoute';
 import { APPROVER_ROLES } from '../features/auth/roles';
 import { MyReservationsPage } from '../features/reservations/components/MyReservationsPage';
 import { ResourceCalendarPage } from '../features/resources/components/ResourceCalendarPage';
+import { ResourceDetailPage } from '../features/resources/components/ResourceDetailPage';
 import { ResourcesPage } from '../features/resources/components/ResourcesPage';
 import { AppLayout } from '../shared/components/AppLayout';
 import { NotFoundPage } from '../shared/components/NotFoundPage';
@@ -25,6 +26,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <Navigate to="/resources" replace /> },
           { path: 'resources', element: <ResourcesPage /> },
+          { path: 'resources/:resourceId', element: <ResourceDetailPage /> },
           { path: 'calendar', element: <ResourceCalendarPage /> },
           { path: 'reservations', element: <MyReservationsPage /> },
           {

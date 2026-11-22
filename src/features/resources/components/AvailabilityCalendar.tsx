@@ -14,7 +14,13 @@ const PLUGINS = [dayGridPlugin, timeGridPlugin];
 const TIME_FORMAT = { hour: '2-digit', minute: '2-digit', hour12: false } as const;
 const FULL_DATE = { day: 'numeric', month: 'long', year: 'numeric' } as const;
 const VIEW_OPTIONS = {
-  timeGridWeek: { titleFormat: FULL_DATE, dayHeaderFormat: { weekday: 'short', day: 'numeric' } },
+  // „Săptămână” înseamnă 7 zile începând de azi, nu săptămâna calendaristică: duminica, aceasta
+  // ar fi aproape toată în trecut și rezervările următoare nu s-ar vedea fără „înainte”.
+  timeGridWeek: {
+    duration: { days: 7 },
+    titleFormat: FULL_DATE,
+    dayHeaderFormat: { weekday: 'short', day: 'numeric' },
+  },
   timeGridDay: { titleFormat: { ...FULL_DATE, weekday: 'long' } },
 } as const;
 
@@ -30,7 +36,7 @@ export type AvailabilityCalendarProps = {
 
 /**
  * Calendarul FullCalendar al unei resurse, cu vizualizare pe zi, săptămână și lună și bara de
- * navigare proprie. Pe ecrane mici pornește pe zi. În vizualizarea pe lună, timpul de pregătire nu
+ * navigare proprie. Pe ecrane mici pornește pe zi. Săptămâna are 7 zile începând de azi. În vizualizarea pe lună, timpul de pregătire nu
  * se mai afișează separat.
  */
 export function AvailabilityCalendar({ events, hours, onRangeChange }: AvailabilityCalendarProps) {

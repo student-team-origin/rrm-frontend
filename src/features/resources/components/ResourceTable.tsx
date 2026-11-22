@@ -1,4 +1,5 @@
 import {
+  Link,
   Paper,
   Skeleton,
   Table,
@@ -10,8 +11,10 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import type { ChangeEvent, ReactNode } from 'react';
+import type { ChangeEvent, MouseEvent, ReactNode } from 'react';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import type { Resource } from '../types';
+import { resourceDetailPath } from '../utils/resourcePaths';
 import { ResourceStatusChip } from './ResourceStatusChip';
 
 /** Variantele din „Rânduri pe pagină”. */
@@ -39,7 +42,10 @@ export type ResourceTableProps = {
   renderActions: (resource: Resource) => ReactNode;
 };
 
-/** Tabelul catalogului de resurse, cu paginare. Pe ecrane mici se derulează orizontal. */
+/**
+ * Tabelul catalogului de resurse, cu paginare. Pe ecrane mici se derulează orizontal. Click pe un
+ * rând (sau pe denumire) deschide pagina de detaliu a resursei; butoanele din „Acțiuni” nu.
+ */
 export function ResourceTable({
   resources,
   labNames,
@@ -51,8 +57,16 @@ export function ResourceTable({
   onSizeChange,
   renderActions,
 }: ResourceTableProps) {
+  const navigate = useNavigate();
   const handleSizeChange = (event: ChangeEvent<HTMLInputElement>) => {
     onSizeChange(Number(event.target.value));
+  };
+  const handleRowClick = (event: MouseEvent<HTMLElement>, resource: Resource) => {
+    // Linkul de pe denumire navighează singur (și cu Ctrl/clic mijlociu, în tab nou).
+    if (resource.id === undefined || (event.target as HTMLElement).closest('a')) {
+      return;
+    }
+    navigate(resourceDetailPath(resource.id));
   };
 
   return (
@@ -96,9 +110,25 @@ export function ResourceTable({
 
             {!isLoading &&
               resources.map((resource) => (
-                <TableRow key={resource.id} hover>
+                <TableRow
+                  key={resource.id}
+                  hover
+                  onClick={(event) => handleRowClick(event, resource)}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <TableCell sx={{ fontWeight: 'fontWeightMedium', whiteSpace: 'nowrap' }}>
-                    {resource.denumire}
+                    {resource.id === undefined ? (
+                      resource.denumire
+                    ) : (
+                      <Link
+                        component={RouterLink}
+                        to={resourceDetailPath(resource.id)}
+                        color="inherit"
+                        underline="hover"
+                      >
+                        {resource.denumire}
+                      </Link>
+                    )}
                   </TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>
                     {resource.categorie?.denumire ?? '—'}
@@ -110,7 +140,10 @@ export function ResourceTable({
                     {resource.stare ? <ResourceStatusChip status={resource.stare} /> : '—'}
                   </TableCell>
                   <TableCell align="right">{resource.timpPregatireMin ?? '—'}</TableCell>
-                  <TableCell align="right">{renderActions(resource)}</TableCell>
+                  {/* Acțiunile (și meniul lor) nu deschid pagina de detaliu. */}
+                  <TableCell align="right" onClick={(event) => event.stopPropagation()}>
+                    {renderActions(resource)}
+                  </TableCell>
                 </TableRow>
               ))}
           </TableBody>
