@@ -3,8 +3,10 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toApiError } from '../../../api/client';
 import { useLabs } from '../hooks/useLabs';
+import { useNow } from '../hooks/useNow';
+import { useResource } from '../hooks/useResource';
 import { useResourceAvailability } from '../hooks/useResourceAvailability';
-import { useResources } from '../hooks/useResources';
+import { useResourcePicker } from '../hooks/useResourcePicker';
 import type { AvailabilityRange } from '../types';
 import {
   eventColors,
@@ -19,9 +21,6 @@ import { CalendarFilters } from './CalendarFilters';
 /** Parametrii din URL (resursa afișată și laboratorul), ca linkul spre calendar să poată fi trimis. */
 const RESOURCE_SEARCH_PARAM = 'resursaId';
 const LAB_SEARCH_PARAM = 'laboratorId';
-
-/** Resursele din selector: toate, ordonate după denumire (maximul acceptat de backend). */
-const RESOURCE_PICKER_PARAMS = { page: 0, size: 100 };
 
 const UNAVAILABLE_MESSAGES = {
   Mentenanta: 'Resursa este în mentenanță și nu poate fi rezervată până nu redevine activă.',
@@ -43,23 +42,19 @@ export function ResourceCalendarPage() {
   const resourceId = parseId(searchParams.get(RESOURCE_SEARCH_PARAM));
   const labId = parseId(searchParams.get(LAB_SEARCH_PARAM));
   const [range, setRange] = useState<AvailabilityRange>();
-  const resources = useResources(RESOURCE_PICKER_PARAMS);
   const labs = useLabs();
+  const resource = useResource(resourceId).data;
+  const picker = useResourcePicker(labId, resource);
   const availability = useResourceAvailability(resourceId, range);
+  const now = useNow();
 
-  const allResources = resources.data?.items;
-  const labResources = useMemo(
-    () => (allResources ?? []).filter((resource) => !labId || resource.laboratorId === labId),
-    [allResources, labId],
-  );
-  const resource = allResources?.find((item) => item.id === resourceId);
   const intervals = availability.data;
   const events = useMemo(
     () => [
       ...toCalendarEvents(intervals ?? [], resource?.timpPregatireMin ?? 0, eventColors(theme)),
-      ...toUnavailableEvents(resource?.stare, range, new Date()),
+      ...toUnavailableEvents(resource?.stare, range, now),
     ],
-    [intervals, resource?.timpPregatireMin, resource?.stare, range, theme],
+    [intervals, resource?.timpPregatireMin, resource?.stare, range, theme, now],
   );
   const hours = useMemo(() => visibleHours(intervals ?? []), [intervals]);
 
@@ -68,8 +63,12 @@ export function ResourceCalendarPage() {
     update(next);
     setSearchParams(next);
   };
-  const handleResourceChange = (id: number) =>
-    updateSearchParams((params) => params.set(RESOURCE_SEARCH_PARAM, String(id)));
+  const handleResourceChange = (id: number | undefined) =>
+    updateSearchParams((params) =>
+      id === undefined
+        ? params.delete(RESOURCE_SEARCH_PARAM)
+        : params.set(RESOURCE_SEARCH_PARAM, String(id)),
+    );
   const handleLabChange = (id: number | undefined) =>
     updateSearchParams((params) => {
       if (id === undefined) {
@@ -99,11 +98,14 @@ export function ResourceCalendarPage() {
           </Typography>
         </div>
         <CalendarFilters
-          resources={labResources}
+          resources={picker.options}
+          selectedResource={resource}
+          totalResources={picker.total}
+          shownResources={picker.shown}
+          resourcesLoading={picker.isLoading}
           labs={labs.data ?? []}
-          resourceId={resourceId}
           labId={labId}
-          resourcesLoading={resources.isPending}
+          onResourceSearch={picker.search}
           onResourceChange={handleResourceChange}
           onLabChange={handleLabChange}
         />

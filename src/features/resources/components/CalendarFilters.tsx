@@ -1,4 +1,4 @@
-import { MenuItem, Stack, TextField } from '@mui/material';
+import { Autocomplete, MenuItem, Stack, TextField } from '@mui/material';
 import type { ChangeEvent } from 'react';
 import { resourceStatusLabels } from '../../../theme';
 import type { Laboratory, Resource } from '../types';
@@ -6,56 +6,80 @@ import type { Laboratory, Resource } from '../types';
 /** Valoarea opțiunii „Toate laboratoarele” din selector. */
 const ALL_LABS = '';
 
+/** Denumirea resursei, cu starea în paranteză dacă nu e activă. */
+function resourceLabel(resource: Resource): string {
+  const name = resource.denumire ?? '';
+  return resource.stare && resource.stare !== 'Activa'
+    ? `${name} (${resourceStatusLabels[resource.stare]})`
+    : name;
+}
+
 export type CalendarFiltersProps = {
-  /** Resursele din laboratorul ales (sau toate). */
+  /** Resursele găsite pe server pentru căutarea și laboratorul curente (plus cea aleasă). */
   resources: Resource[];
-  labs: Laboratory[];
-  resourceId: number | undefined;
-  labId: number | undefined;
+  /** Resursa afișată în calendar, dacă a fost aleasă și s-a încărcat. */
+  selectedResource: Resource | undefined;
+  /** Câte resurse se potrivesc în total; dacă sunt mai multe decât cele afișate, apare un indiciu. */
+  totalResources: number;
+  /** Câte dintre ele sunt în listă. */
+  shownResources: number;
   resourcesLoading: boolean;
-  onResourceChange: (resourceId: number) => void;
+  labs: Laboratory[];
+  labId: number | undefined;
+  onResourceSearch: (text: string) => void;
+  onResourceChange: (resourceId: number | undefined) => void;
   onLabChange: (labId: number | undefined) => void;
 };
 
-/** Selectoarele paginii Calendar: resursa afișată și laboratorul după care se filtrează lista. */
+/**
+ * Selectoarele paginii Calendar: resursa afișată (cu căutare pe server, deci orice resursă poate
+ * fi găsită) și laboratorul după care se filtrează lista.
+ */
 export function CalendarFilters({
   resources,
-  labs,
-  resourceId,
-  labId,
+  selectedResource,
+  totalResources,
+  shownResources,
   resourcesLoading,
+  labs,
+  labId,
+  onResourceSearch,
   onResourceChange,
   onLabChange,
 }: CalendarFiltersProps) {
-  // Valoarea selectorului e goală până sosesc opțiunile, ca MUI să nu primească o valoare
-  // inexistentă.
-  const resourceValue = resources.some((resource) => resource.id === resourceId)
-    ? String(resourceId)
-    : '';
   const labValue = labs.some((lab) => lab.id === labId) ? String(labId) : ALL_LABS;
+  const hint =
+    totalResources > shownResources
+      ? `Se afișează ${shownResources} din ${totalResources}. Scrie pentru a căuta.`
+      : undefined;
 
   const handleLabChange = (event: ChangeEvent<HTMLInputElement>) =>
     onLabChange(event.target.value === ALL_LABS ? undefined : Number(event.target.value));
+  const handleResourceChange = (resource: Resource | null) => {
+    // După alegere, lista revine la primele resurse, nu la ultima căutare.
+    onResourceSearch('');
+    onResourceChange(resource?.id);
+  };
 
   return (
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-      <TextField
-        select
-        label="Resursă"
+    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: 'flex-start' }}>
+      <Autocomplete
+        options={resources}
+        value={selectedResource ?? null}
+        onChange={(_, resource) => handleResourceChange(resource)}
+        onInputChange={(_, text, reason) => reason === 'input' && onResourceSearch(text)}
+        // Căutarea se face pe server; lista primită se afișează ca atare.
+        filterOptions={(options) => options}
+        getOptionLabel={resourceLabel}
+        getOptionKey={(resource) => resource.id ?? resourceLabel(resource)}
+        isOptionEqualToValue={(option, value) => option.id === value.id}
+        loading={resourcesLoading}
+        loadingText="Se caută..."
+        noOptionsText="Nicio resursă găsită"
         size="small"
-        value={resourceValue}
-        onChange={(event) => onResourceChange(Number(event.target.value))}
-        disabled={resourcesLoading}
-        sx={{ minWidth: { sm: 280 } }}
-      >
-        {resources.map((resource) => (
-          <MenuItem key={resource.id} value={String(resource.id)}>
-            {resource.stare && resource.stare !== 'Activa'
-              ? `${resource.denumire} (${resourceStatusLabels[resource.stare]})`
-              : resource.denumire}
-          </MenuItem>
-        ))}
-      </TextField>
+        sx={{ width: { xs: '100%', sm: 280 } }}
+        renderInput={(params) => <TextField {...params} label="Resursă" helperText={hint} />}
+      />
       <TextField
         select
         label="Laborator"

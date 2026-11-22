@@ -4,8 +4,8 @@ import dayjs from 'dayjs';
 import { httpError } from '../../../api/testUtils';
 import { routes } from '../../../routes/routes';
 import { renderWithProviders } from '../../../test/renderWithProviders';
-import { getLabs, getResourceAvailability, getResources } from '../api';
-import type { Resource } from '../types';
+import { getLabs, getResource, getResourceAvailability, getResources } from '../api';
+import type { Resource, ResourceListParams } from '../types';
 
 vi.mock('../api');
 
@@ -38,11 +38,21 @@ function calendar() {
 
 describe('ResourceCalendarPage', () => {
   beforeEach(() => {
-    vi.mocked(getResources).mockResolvedValue({
-      page: 0,
-      size: 100,
-      total: RESOURCES.length,
-      items: RESOURCES,
+    // Ca backend-ul: filtrează după laborator și după textul căutat.
+    vi.mocked(getResources).mockImplementation(async (params: ResourceListParams) => {
+      const items = RESOURCES.filter(
+        (resource) =>
+          (!params.laboratorId || resource.laboratorId === params.laboratorId) &&
+          (!params.q || resource.denumire?.toLowerCase().includes(params.q.toLowerCase())),
+      );
+      return { page: 0, size: 20, total: items.length, items };
+    });
+    vi.mocked(getResource).mockImplementation(async (id: number) => {
+      const resource = RESOURCES.find((item) => item.id === id);
+      if (!resource) {
+        throw httpError(404, { code: 'RESURSA_INEXISTENTA', message: 'Resursa nu există.' });
+      }
+      return resource;
     });
     vi.mocked(getLabs).mockResolvedValue(LABS);
     vi.mocked(getResourceAvailability).mockResolvedValue([
@@ -71,7 +81,7 @@ describe('ResourceCalendarPage', () => {
     expect(await calendar().findByText('Aprobată')).toBeInTheDocument();
     expect(calendar().getByText('10:00 - 12:00')).toBeInTheDocument();
     expect(calendar().getByText('Pregătire')).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Resursă' })).toHaveTextContent('Braț robotic UR5');
+    expect(screen.getByRole('combobox', { name: 'Resursă' })).toHaveValue('Braț robotic UR5');
   });
 
   it('afișează legenda cu stările care ocupă resursa', async () => {
@@ -114,9 +124,7 @@ describe('ResourceCalendarPage', () => {
     const user = userEvent.setup();
     renderWithProviders(routes, '/calendar?resursaId=1');
     await waitFor(() =>
-      expect(screen.getByRole('combobox', { name: 'Resursă' })).toHaveTextContent(
-        'Braț robotic UR5',
-      ),
+      expect(screen.getByRole('combobox', { name: 'Resursă' })).toHaveValue('Braț robotic UR5'),
     );
 
     await user.click(screen.getByRole('combobox', { name: 'Laborator' }));
@@ -125,10 +133,58 @@ describe('ResourceCalendarPage', () => {
     expect(
       await screen.findByText('Alege o resursă pentru a-i vedea calendarul.'),
     ).toBeInTheDocument();
+    expect(getResources).toHaveBeenLastCalledWith(expect.objectContaining({ laboratorId: 2 }));
     await user.click(screen.getByRole('combobox', { name: 'Resursă' }));
-    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
-      'Microscop Leica DM750 (Mentenanță)',
-    ]);
+    await waitFor(() =>
+      expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+        'Microscop Leica DM750 (Mentenanță)',
+      ]),
+    );
+  });
+
+  it('caută resursa pe server, ca toate resursele să poată fi găsite', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(routes, '/calendar');
+
+    await user.type(await screen.findByRole('combobox', { name: 'Resursă' }), 'micro');
+
+    await waitFor(() =>
+      expect(getResources).toHaveBeenLastCalledWith({ q: 'micro', page: 0, size: 20 }),
+    );
+    await waitFor(() =>
+      expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+        'Microscop Leica DM750 (Mentenanță)',
+      ]),
+    );
+  });
+
+  it('spune câte resurse nu încap în listă', async () => {
+    vi.mocked(getResources).mockResolvedValue({
+      page: 0,
+      size: 20,
+      total: 45,
+      items: RESOURCES,
+    });
+    renderWithProviders(routes, '/calendar');
+
+    expect(
+      await screen.findByText('Se afișează 2 din 45. Scrie pentru a căuta.'),
+    ).toBeInTheDocument();
+  });
+
+  it('păstrează resursa din URL chiar dacă nu e printre primele din listă', async () => {
+    vi.mocked(getResources).mockResolvedValue({
+      page: 0,
+      size: 20,
+      total: 1,
+      items: [RESOURCES[1]],
+    });
+    renderWithProviders(routes, '/calendar?resursaId=1');
+
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: 'Resursă' })).toHaveValue('Braț robotic UR5'),
+    );
+    expect(getResource).toHaveBeenCalledWith(1);
   });
 
   it('cere luna întreagă la vizualizarea pe lună', async () => {
