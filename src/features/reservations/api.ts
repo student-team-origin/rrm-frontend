@@ -1,8 +1,10 @@
 import { apiClient } from '../../api/client';
 import type {
   CancelReservationInput,
+  Grant,
   Reservation,
   ReservationDetail,
+  ReservationInput,
   ReservationListParams,
   ReservationPage,
 } from './types';
@@ -25,5 +27,20 @@ export async function cancelReservation(
   input: CancelReservationInput,
 ): Promise<Reservation> {
   const { data } = await apiClient.post<Reservation>(`/reservations/${id}/cancel`, input);
+  return data;
+}
+
+/**
+ * `POST /reservations`: trimite o cerere de rezervare, care pornește în așteptarea coordonatorului.
+ * Răspunde 409 dacă intervalul e ocupat și 422 dacă soldul grantului nu ajunge.
+ */
+export async function createReservation(input: ReservationInput): Promise<Reservation> {
+  const { data } = await apiClient.post<Reservation>('/reservations', input);
+  return data;
+}
+
+/** `GET /grants`: granturile din care face parte utilizatorul, cu orele rămase. */
+export async function getGrants(): Promise<Grant[]> {
+  const { data } = await apiClient.get<Grant[]>('/grants');
   return data;
 }

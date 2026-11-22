@@ -1,6 +1,12 @@
-import type { DatesSetArg, DayHeaderContentArg, EventInput } from '@fullcalendar/core';
+import type {
+  DateSelectArg,
+  DatesSetArg,
+  DayHeaderContentArg,
+  EventInput,
+} from '@fullcalendar/core';
 import roLocale from '@fullcalendar/core/locales/ro';
 import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
@@ -10,7 +16,7 @@ import { EVENT_CLASS, type VisibleHours } from '../utils/calendarEvents';
 import { CalendarEventContent } from './CalendarEventContent';
 import { CalendarToolbar, type CalendarView } from './CalendarToolbar';
 
-const PLUGINS = [dayGridPlugin, timeGridPlugin];
+const PLUGINS = [dayGridPlugin, timeGridPlugin, interactionPlugin];
 const TIME_FORMAT = { hour: '2-digit', minute: '2-digit', hour12: false } as const;
 const FULL_DATE = { day: 'numeric', month: 'long', year: 'numeric' } as const;
 const VIEW_OPTIONS = {
@@ -22,7 +28,12 @@ const VIEW_OPTIONS = {
     dayHeaderFormat: { weekday: 'short', day: 'numeric' },
   },
   timeGridDay: { titleFormat: { ...FULL_DATE, weekday: 'long' } },
+  // Pe lună nu se văd orele, deci intervalul de rezervat se alege doar pe zi sau pe săptămână.
+  dayGridMonth: { selectable: false },
 } as const;
+
+/** Pe ecranele tactile, cât timp se ține apăsat până începe selecția (implicit 1 s). */
+const LONG_PRESS_DELAY_MS = 300;
 
 type DisplayedPeriod = { title: string; view: CalendarView; showsToday: boolean };
 
@@ -32,14 +43,24 @@ export type AvailabilityCalendarProps = {
   hours: VisibleHours;
   /** Apelat când se schimbă intervalul afișat (navigare sau altă vizualizare). */
   onRangeChange: (range: AvailabilityRange) => void;
+  /**
+   * Dacă e dat, utilizatorul poate selecta cu mouse-ul (sau ținând apăsat, pe mobil) un interval
+   * liber din viitor, pentru o rezervare nouă.
+   */
+  onSelect?: (interval: { start: Date; end: Date }) => void;
 };
 
 /**
  * Calendarul FullCalendar al unei resurse, cu vizualizare pe zi, săptămână și lună și bara de
  * navigare proprie. Pe ecrane mici pornește pe zi. Săptămâna are 7 zile începând de azi. În vizualizarea pe lună, timpul de pregătire nu
- * se mai afișează separat.
+ * se mai afișează separat. Cu `onSelect`, pe zi și pe săptămână se poate selecta un interval liber.
  */
-export function AvailabilityCalendar({ events, hours, onRangeChange }: AvailabilityCalendarProps) {
+export function AvailabilityCalendar({
+  events,
+  hours,
+  onRangeChange,
+  onSelect,
+}: AvailabilityCalendarProps) {
   const theme = useTheme();
   // `noSsr`: valoarea corectă de la prima randare, pentru că FullCalendar citește `initialView`
   // doar la montare.
@@ -64,6 +85,11 @@ export function AvailabilityCalendar({ events, hours, onRangeChange }: Availabil
       showsToday: now >= view.currentStart && now < view.currentEnd,
     });
     onRangeChange({ from: start.toISOString(), to: end.toISOString() });
+  };
+
+  const handleSelect = ({ start, end }: DateSelectArg) => {
+    calendarApi()?.unselect();
+    onSelect?.({ start, end });
   };
 
   return (
@@ -106,6 +132,13 @@ export function AvailabilityCalendar({ events, hours, onRangeChange }: Availabil
         views={VIEW_OPTIONS}
         events={visibleEvents}
         datesSet={handleDatesSet}
+        selectable={onSelect !== undefined}
+        selectMirror
+        // Intervalele ocupate (și timpul de pregătire) nu se pot selecta, nici cele din trecut.
+        selectOverlap={false}
+        selectAllow={({ start }) => start >= new Date()}
+        select={handleSelect}
+        selectLongPressDelay={LONG_PRESS_DELAY_MS}
         eventContent={(arg) => <CalendarEventContent arg={arg} />}
         dayHeaderContent={renderDayHeader}
         eventDisplay="block"
