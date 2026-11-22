@@ -2,6 +2,8 @@ import AddIcon from '@mui/icons-material/Add';
 import { Alert, Box, Button, LinearProgress, Snackbar, Stack, Typography } from '@mui/material';
 import { useMemo } from 'react';
 import { toApiError } from '../../../api/client';
+import { useCurrentUser } from '../../auth/hooks/useCurrentUser';
+import { canManageAnyLaboratory, canManageLaboratory } from '../../auth/permissions';
 import { useLabs } from '../hooks/useLabs';
 import { useResourceActions } from '../hooks/useResourceActions';
 import { useResourceCategories } from '../hooks/useResourceCategories';
@@ -15,7 +17,8 @@ import { ResourceTable } from './ResourceTable';
 
 /**
  * Pagina Catalog resurse: lista resurselor, cu căutare, filtre și paginare, plus
- * adăugarea, editarea, schimbarea stării și ștergerea unei resurse.
+ * adăugarea, editarea, schimbarea stării și ștergerea unei resurse. Acțiunile de modificare apar
+ * doar pentru Administrator și pentru Responsabilul laboratorului resursei (TO-75).
  */
 export function ResourcesPage() {
   const filterState = useResourceFilters();
@@ -24,6 +27,7 @@ export function ResourcesPage() {
   const categoriesQuery = useResourceCategories();
   const actions = useResourceActions();
   const { dialog, feedback } = actions;
+  const { data: currentUser } = useCurrentUser();
 
   const labs = useMemo(() => labsQuery.data ?? [], [labsQuery.data]);
   const labNames = useMemo(
@@ -34,6 +38,11 @@ export function ResourcesPage() {
         ),
       ),
     [labs],
+  );
+  // În formular se poate alege doar un laborator pe care utilizatorul îl gestionează.
+  const managedLabs = useMemo(
+    () => labs.filter((lab) => canManageLaboratory(currentUser, lab.id)),
+    [labs, currentUser],
   );
 
   const isRefreshing = resourcesQuery.isFetching && !resourcesQuery.isPending;
@@ -48,9 +57,11 @@ export function ResourcesPage() {
         <Typography variant="h4" component="h1">
           Catalog resurse
         </Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={actions.openCreate}>
-          Adaugă resursă
-        </Button>
+        {canManageAnyLaboratory(currentUser) && (
+          <Button variant="contained" startIcon={<AddIcon />} onClick={actions.openCreate}>
+            Adaugă resursă
+          </Button>
+        )}
       </Stack>
 
       <ResourceFilterBar
@@ -94,14 +105,16 @@ export function ResourcesPage() {
             size={filterState.size}
             onPageChange={filterState.setPage}
             onSizeChange={filterState.setSize}
-            renderActions={(resource) => (
-              <ResourceRowActions
-                resource={resource}
-                onEdit={actions.openEdit}
-                onDelete={actions.openDelete}
-                onChangeStatus={actions.changeStatus}
-              />
-            )}
+            renderActions={(resource) =>
+              canManageLaboratory(currentUser, resource.laboratorId) && (
+                <ResourceRowActions
+                  resource={resource}
+                  onEdit={actions.openEdit}
+                  onDelete={actions.openDelete}
+                  onChangeStatus={actions.changeStatus}
+                />
+              )
+            }
           />
         </Box>
       )}
@@ -110,7 +123,7 @@ export function ResourcesPage() {
         <ResourceFormDialog
           resource={dialog.resource}
           categories={categoriesQuery.data ?? []}
-          labs={labs}
+          labs={managedLabs}
           onClose={actions.closeDialog}
           onSaved={() => actions.notifySuccess('Resursa a fost salvată.')}
         />

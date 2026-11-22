@@ -1,6 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { routes } from '../../../routes/routes';
+import { getCurrentUser } from '../../auth/api';
+import { ADMIN_USER } from '../../../test/authenticatedUser';
 import { renderWithProviders } from '../../../test/renderWithProviders';
 import {
   getLabs,
@@ -132,6 +134,7 @@ describe('ResourcesPage', () => {
   });
 
   it('nu deschide pagina de detaliu din butoanele de acțiuni', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(ADMIN_USER);
     const user = userEvent.setup();
     renderWithProviders(routes, '/resources');
 

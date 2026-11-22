@@ -2,6 +2,8 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { httpError } from '../../../api/testUtils';
 import { routes } from '../../../routes/routes';
+import { getCurrentUser } from '../../auth/api';
+import { ADMIN_USER } from '../../../test/authenticatedUser';
 import { renderWithProviders } from '../../../test/renderWithProviders';
 import {
   changeResourceStatus,
@@ -43,6 +45,8 @@ async function choose(user: ReturnType<typeof userEvent.setup>, field: string, o
 describe('ResourceFormDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Doar Administratorul și Responsabilul de laborator văd acțiunile din catalog (TO-75).
+    vi.mocked(getCurrentUser).mockResolvedValue(ADMIN_USER);
     vi.mocked(getResources).mockResolvedValue({ page: 0, size: 20, total: 1, items: [UR5] });
     vi.mocked(getLabs).mockResolvedValue([
       { id: 2, denumire: 'Laborator Robotică' },
@@ -149,6 +153,19 @@ describe('ResourceFormDialog', () => {
       await within(dialog).findByText('Resursa are rezervări și nu poate fi ștearsă.'),
     ).toBeInTheDocument();
     expect(deleteResource).toHaveBeenCalledWith(15);
+  });
+
+  it('la 403 spune că utilizatorul nu are drepturi, nu o eroare generică', async () => {
+    vi.mocked(changeResourceStatus).mockRejectedValue(
+      httpError(403, { code: 'ACCES_INTERZIS', message: 'Forbidden' }),
+    );
+    const user = await openPage();
+    await user.click(
+      screen.getByRole('button', { name: 'Schimbă starea pentru Braț robotic UR5' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Mentenanță' }));
+
+    expect(await screen.findByText('Nu ai drepturi pentru această operație.')).toBeInTheDocument();
   });
 
   it('schimbă starea resursei din meniul rândului', async () => {

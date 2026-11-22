@@ -154,7 +154,10 @@ export function AvailabilityCalendar({
   );
 }
 
-/** În vizualizarea pe zi și pe săptămână, ziua de azi are în antet eticheta „azi”. */
+/**
+ * În vizualizarea pe zi și pe săptămână, ziua de azi are în antet eticheta „azi”, în culoarea
+ * principală a aplicației (aceeași cu bara de sus).
+ */
 function renderDayHeader({ text, isToday, view }: DayHeaderContentArg) {
   if (!isToday || view.type === 'dayGridMonth') {
     return text;
@@ -166,8 +169,8 @@ function renderDayHeader({ text, isToday, view }: DayHeaderContentArg) {
         px: 1.25,
         py: 0.25,
         borderRadius: 4,
-        bgcolor: 'text.primary',
-        color: 'background.paper',
+        bgcolor: 'primary.main',
+        color: 'primary.contrastText',
       }}
     >
       {text} · azi
