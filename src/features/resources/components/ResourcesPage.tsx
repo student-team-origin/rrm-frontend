@@ -9,6 +9,7 @@ import { useResourceActions } from '../hooks/useResourceActions';
 import { useResourceCategories } from '../hooks/useResourceCategories';
 import { useResourceFilters } from '../hooks/useResourceFilters';
 import { useResources } from '../hooks/useResources';
+import type { Resource } from '../types';
 import { DeleteResourceDialog } from './DeleteResourceDialog';
 import { ResourceFilterBar } from './ResourceFilterBar';
 import { ResourceFormDialog } from './ResourceFormDialog';
@@ -45,6 +46,17 @@ export function ResourcesPage() {
     [labs, currentUser],
   );
 
+  const canManageResources = canManageAnyLaboratory(currentUser);
+  const renderActions = (resource: Resource) =>
+    canManageLaboratory(currentUser, resource.laboratorId) && (
+      <ResourceRowActions
+        resource={resource}
+        onEdit={actions.openEdit}
+        onDelete={actions.openDelete}
+        onChangeStatus={actions.changeStatus}
+      />
+    );
+
   const isRefreshing = resourcesQuery.isFetching && !resourcesQuery.isPending;
 
   return (
@@ -57,7 +69,7 @@ export function ResourcesPage() {
         <Typography variant="h4" component="h1">
           Catalog resurse
         </Typography>
-        {canManageAnyLaboratory(currentUser) && (
+        {canManageResources && (
           <Button variant="contained" startIcon={<AddIcon />} onClick={actions.openCreate}>
             Adaugă resursă
           </Button>
@@ -105,16 +117,7 @@ export function ResourcesPage() {
             size={filterState.size}
             onPageChange={filterState.setPage}
             onSizeChange={filterState.setSize}
-            renderActions={(resource) =>
-              canManageLaboratory(currentUser, resource.laboratorId) && (
-                <ResourceRowActions
-                  resource={resource}
-                  onEdit={actions.openEdit}
-                  onDelete={actions.openDelete}
-                  onChangeStatus={actions.changeStatus}
-                />
-              )
-            }
+            renderActions={canManageResources ? renderActions : undefined}
           />
         </Box>
       )}

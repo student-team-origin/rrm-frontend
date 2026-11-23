@@ -62,6 +62,7 @@ describe('ResourcesPage – acțiunile după rolul utilizatorului (TO-75)', () =
     await openCatalogAs(user);
 
     expect(screen.getByLabelText('Caută')).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Acțiuni' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Adaugă resursă' })).not.toBeInTheDocument();
     expect(actionsOf('Braț robotic UR5')).toHaveLength(0);
     expect(actionsOf('Imprimantă 3D Prusa')).toHaveLength(0);
@@ -70,6 +71,8 @@ describe('ResourcesPage – acțiunile după rolul utilizatorului (TO-75)', () =
   it('Responsabilul Laboratorului 2 are acțiuni doar pe resursele lui și adaugă doar acolo', async () => {
     const user = userEvent.setup();
     await openCatalogAs(LAB_2_MANAGER_USER);
+
+    expect(screen.getByRole('columnheader', { name: 'Acțiuni' })).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: 'Editează Braț robotic UR5' })).toBeInTheDocument();
     expect(actionsOf('Imprimantă 3D Prusa')).toHaveLength(0);
