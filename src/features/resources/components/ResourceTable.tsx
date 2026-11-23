@@ -20,7 +20,7 @@ import { ResourceStatusChip } from './ResourceStatusChip';
 /** Variantele din „Rânduri pe pagină”. */
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
-const COLUMNS = ['Denumire', 'Categorie', 'Laborator', 'Stare', 'Timp pregătire (min)', 'Acțiuni'];
+const COLUMNS = ['Denumire', 'Categorie', 'Laborator', 'Stare', 'Timp pregătire (min)'];
 const RIGHT_ALIGNED = new Set(['Timp pregătire (min)', 'Acțiuni']);
 const SKELETON_ROWS = 5;
 
@@ -39,7 +39,7 @@ export type ResourceTableProps = {
   onPageChange: (page: number) => void;
   onSizeChange: (size: number) => void;
   /** Butoanele din coloana „Acțiuni” pentru o resursă. */
-  renderActions: (resource: Resource) => ReactNode;
+  renderActions?: (resource: Resource) => ReactNode;
 };
 
 /**
@@ -58,6 +58,7 @@ export function ResourceTable({
   renderActions,
 }: ResourceTableProps) {
   const navigate = useNavigate();
+  const columns = renderActions ? [...COLUMNS, 'Acțiuni'] : COLUMNS;
   const handleSizeChange = (event: ChangeEvent<HTMLInputElement>) => {
     onSizeChange(Number(event.target.value));
   };
@@ -75,7 +76,7 @@ export function ResourceTable({
         <Table size="small" aria-label="Resurse">
           <TableHead>
             <TableRow>
-              {COLUMNS.map((column) => (
+              {columns.map((column) => (
                 <TableCell
                   key={column}
                   align={RIGHT_ALIGNED.has(column) ? 'right' : 'left'}
@@ -90,7 +91,7 @@ export function ResourceTable({
             {isLoading &&
               Array.from({ length: SKELETON_ROWS }, (_, row) => (
                 <TableRow key={row} data-testid="resource-skeleton-row">
-                  {COLUMNS.map((column) => (
+                  {columns.map((column) => (
                     <TableCell key={column}>
                       <Skeleton />
                     </TableCell>
@@ -100,7 +101,7 @@ export function ResourceTable({
 
             {!isLoading && resources.length === 0 && (
               <TableRow>
-                <TableCell colSpan={COLUMNS.length} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
                   <Typography color="text.secondary">
                     Nu există resurse pentru filtrele alese
                   </Typography>
@@ -140,10 +141,11 @@ export function ResourceTable({
                     {resource.stare ? <ResourceStatusChip status={resource.stare} /> : '—'}
                   </TableCell>
                   <TableCell align="right">{resource.timpPregatireMin ?? '—'}</TableCell>
-                  {/* Acțiunile (și meniul lor) nu deschid pagina de detaliu. */}
-                  <TableCell align="right" onClick={(event) => event.stopPropagation()}>
-                    {renderActions(resource)}
-                  </TableCell>
+                  {renderActions && (
+                    <TableCell align="right" onClick={(event) => event.stopPropagation()}>
+                      {renderActions(resource)}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
           </TableBody>
